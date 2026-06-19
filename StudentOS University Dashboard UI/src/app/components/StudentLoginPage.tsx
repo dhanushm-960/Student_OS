@@ -5,7 +5,7 @@ import FeatureCard from "./ui/FeatureCard";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function StudentLoginPage({ onSwitchToAdmin }: { onSwitchToAdmin?: () => void }) {
+export function StudentLoginPage({ onSwitchToAdmin, onLogin }: { onSwitchToAdmin?: () => void; onLogin?: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -27,7 +27,10 @@ export function StudentLoginPage({ onSwitchToAdmin }: { onSwitchToAdmin?: () => 
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    setTimeout(() => setLoading(false), 1000);
+    setTimeout(() => {
+      setLoading(false);
+      if (onLogin) onLogin();
+    }, 900);
   }
 
   return (

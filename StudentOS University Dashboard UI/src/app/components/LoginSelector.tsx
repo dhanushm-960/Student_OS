@@ -58,7 +58,7 @@ export function LoginSelector({ onSelect }: { onSelect: (role: "admin" | "studen
                   id="role-select"
                   value={role}
                   onChange={(event) => setRole(event.target.value as "student" | "admin")}
-                  className="w-full rounded-3xl border border-white/10 bg-slate-950/90 px-5 py-4 pr-12 text-white outline-none transition duration-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full rounded-3xl border border-white/10 bg-slate-950/90 px-5 py-4 pr-12 text-white outline-none appearance-none transition duration-200 hover:border-white/15 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
                 >
                   <option value="student">Student</option>
                   <option value="admin">Admin</option>
