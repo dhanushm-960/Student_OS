@@ -28,14 +28,17 @@ function Card({
   children,
   className = "",
   style = {},
+  onClick,
 }: {
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
+  onClick?: () => void;
 }) {
   return (
     <div
       className={`rounded-2xl p-5 ${className}`}
+      onClick={onClick}
       style={{
         background: "white",
         border: "1px solid rgba(79,70,229,0.1)",
@@ -107,13 +110,24 @@ const kpis = [
   },
 ];
 
-function OverviewCards() {
+function OverviewCards({ onNavigate }: { onNavigate?: (page: string) => void }) {
   return (
     <div className="grid grid-cols-4 gap-4 mb-6">
       {kpis.map((kpi) => {
         const Icon = kpi.icon;
+        const handleClick = () => {
+          if (!onNavigate) return;
+          if (kpi.label === "Total Students") onNavigate("students");
+          else if (kpi.label === "Active Users") onNavigate("academic");
+          else if (kpi.label === "Placement Readiness") onNavigate("placement");
+          else if (kpi.label === "Student Engagement") onNavigate("academic");
+        };
         return (
-          <Card key={kpi.label} className="relative overflow-hidden">
+          <Card
+            key={kpi.label}
+            className="relative overflow-hidden cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all duration-200"
+            onClick={handleClick}
+          >
             <div className="flex items-start justify-between mb-4">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center"
@@ -1009,7 +1023,7 @@ const aiInsights = [
   },
 ];
 
-function AIInsightsPanel() {
+function AIInsightsPanel({ onNavigate }: { onNavigate?: (page: string) => void }) {
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-5">
@@ -1035,8 +1049,21 @@ function AIInsightsPanel() {
       <div className="grid grid-cols-3 gap-4">
         {aiInsights.map((insight) => {
           const Icon = insight.icon;
+          const handleClick = () => {
+            if (!onNavigate) return;
+            if (insight.title === "Engagement Drop Detected") onNavigate("academic");
+            else if (insight.title === "Top Performing Department") onNavigate("departments");
+            else if (insight.title === "Interview Preparation Gap") onNavigate("placement");
+            else if (insight.title === "Coding Activity Surge") onNavigate("projects");
+            else if (insight.title === "Department Gap Alert") onNavigate("departments");
+            else if (insight.title === "ML Skill Growth") onNavigate("academic");
+          };
           return (
-            <Card key={insight.title} className="flex flex-col gap-3">
+            <Card
+              key={insight.title}
+              className="flex flex-col gap-3 cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all duration-200"
+              onClick={handleClick}
+            >
               <div className="flex items-start gap-3">
                 <div
                   className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -1070,7 +1097,7 @@ function AIInsightsPanel() {
 }
 
 /* ─── Main Dashboard Page ─── */
-export function DashboardPage({ section }: { section?: string }) {
+export function DashboardPage({ section, onNavigate }: { section?: string; onNavigate?: (page: string) => void }) {
   if (section) {
     switch (section) {
       case "placement":
@@ -1100,8 +1127,10 @@ export function DashboardPage({ section }: { section?: string }) {
         );
       default:
         return (
-          <div>
-            <OverviewCards />
+          <div className="space-y-6">
+            <OverviewCards onNavigate={onNavigate} />
+            <StudentSuccessCharts />
+            <AIInsightsPanel onNavigate={onNavigate} />
           </div>
         );
     }
@@ -1109,14 +1138,14 @@ export function DashboardPage({ section }: { section?: string }) {
 
   return (
     <div>
-      <OverviewCards />
+      <OverviewCards onNavigate={onNavigate} />
       <StudentSuccessCharts />
       <PlacementSection />
       <DepartmentPerformance />
       <AtRiskStudents />
       <ProjectAnalytics />
       <PlacementDashboard />
-      <AIInsightsPanel />
+      <AIInsightsPanel onNavigate={onNavigate} />
     </div>
   );
 }

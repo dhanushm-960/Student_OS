@@ -1,84 +1,66 @@
-import React, { useState } from "react";
+import React from "react";
+import { GraduationCap, Shield, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router";
 
-export function LoginSelector({ onSelect }: { onSelect: (role: "admin" | "student") => void }) {
-  const [role, setRole] = useState<"admin" | "student">("student");
+export function LoginSelector() {
+  const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(79,70,229,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.16),_transparent_20%),#070a14] p-6">
-      <div className="relative w-full max-w-4xl overflow-hidden rounded-[2rem] border border-white/15 bg-slate-950/95 shadow-2xl shadow-slate-950/40 backdrop-blur-2xl">
-        <div className="absolute inset-x-0 top-0 h-48 bg-[linear-gradient(135deg,_#4f46e5,_#7c3aed)] opacity-65 blur-3xl" />
-        <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-8">
-          <div className="p-10 lg:p-14 text-white">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-slate-200/90 backdrop-blur-sm">
-              StudentOS</span>
-            <h1 className="mt-8 text-4xl font-display font-black tracking-tight leading-tight text-white">
-              Your AI-Powered Operating System for Student Success</h1>
-            <p className="mt-4 max-w-xl text-sm leading-7 text-slate-200/85">
-              Manage academics, projects, skills, placements, and productivity from one beautiful workspace.
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(79,70,229,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.16),_transparent_20%),#070a14] p-6">
+      <div className="relative w-full max-w-4xl overflow-hidden rounded-[2.5rem] border border-white/10 bg-slate-950/80 p-8 sm:p-12 md:p-16 shadow-2xl shadow-slate-950/50 backdrop-blur-2xl flex flex-col items-center">
+        {/* Decorative background glow */}
+        <div className="absolute -top-40 inset-x-0 h-80 bg-[linear-gradient(135deg,_rgba(79,70,229,0.3),_rgba(124,58,237,0.3))] opacity-50 blur-3xl pointer-events-none" />
+
+        {/* Header */}
+        <div className="relative z-10 text-center mb-12 max-w-xl">
+          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/25 mb-4 font-black text-2xl tracking-wider">
+            SO
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-display font-extrabold tracking-tight text-white mb-3">
+            Welcome to StudentOS
+          </h1>
+          <p className="text-sm sm:text-base text-slate-400 leading-relaxed">
+            The unified AI-powered platform for academic excellence, career readiness, and operational analytics. Choose your gateway below.
+          </p>
+        </div>
+
+        {/* Portals Grid */}
+        <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-3xl">
+          {/* Student Card */}
+          <button
+            type="button"
+            onClick={() => navigate("/login-student")}
+            className="group relative flex flex-col items-start rounded-3xl border border-white/5 bg-white/[0.03] p-8 text-left transition-all duration-300 hover:border-indigo-500/30 hover:bg-white/[0.06] hover:shadow-2xl hover:shadow-indigo-500/5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <div className="mb-6 rounded-2xl bg-indigo-500/10 p-4 text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all duration-300">
+              <GraduationCap size={28} />
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">Student Portal</h2>
+            <p className="text-sm text-slate-400 leading-relaxed mb-6">
+              Access your course syllabus, academic calendar, grades, Capstone projects, and get guidance from your AI Mentor.
             </p>
-
-            <div className="mt-10 grid gap-4">
-              <div className="flex items-start gap-3 rounded-3xl border border-white/15 bg-slate-900/85 p-4 text-sm text-slate-100">
-                <span className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-800/80 text-indigo-200">AI</span>
-                <div>
-                  <p className="font-semibold">AI Mentor</p>
-                  <p className="mt-1 text-sm text-slate-300">Personalized guidance and study recommendations.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 rounded-3xl border border-white/15 bg-slate-900/85 p-4 text-sm text-slate-100">
-                <span className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-800/80 text-sky-200">📅</span>
-                <div>
-                  <p className="font-semibold">Smart Planner</p>
-                  <p className="mt-1 text-sm text-slate-300">Stay on top of tasks, assignments, and deadlines.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 rounded-3xl border border-white/15 bg-slate-900/85 p-4 text-sm text-slate-100">
-                <span className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-800/80 text-violet-200">📁</span>
-                <div>
-                  <p className="font-semibold">Placement Dashboard</p>
-                  <p className="mt-1 text-sm text-slate-300">Monitor placement readiness at a glance.</p>
-                </div>
-              </div>
+            <div className="mt-auto flex items-center gap-2 text-sm font-semibold text-indigo-400 group-hover:text-indigo-300 transition-colors">
+              Enter Student OS <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
             </div>
-          </div>
+          </button>
 
-          <div className="p-8 lg:p-12 bg-slate-950/95">
-            <div className="rounded-[1.75rem] border border-white/15 bg-slate-900/95 p-8 shadow-2xl shadow-slate-950/20 backdrop-blur-xl">
-              <div className="mb-6 text-center">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Sign in</p>
-                <h2 className="mt-4 text-3xl font-display font-bold text-white">Choose your role</h2>
-                <p className="mt-3 text-sm leading-6 text-slate-300">
-                  Select Student or Admin from the dropdown and continue.
-                </p>
-              </div>
-
-              <label className="block text-sm font-semibold text-slate-300 mb-3" htmlFor="role-select">Role</label>
-              <div className="relative mb-6">
-                <select
-                  id="role-select"
-                  value={role}
-                  onChange={(event) => setRole(event.target.value as "student" | "admin")}
-                  className="w-full rounded-3xl border border-white/10 bg-slate-950/90 px-5 py-4 pr-12 text-white outline-none appearance-none transition duration-200 hover:border-white/15 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20"
-                >
-                  <option value="student">Student</option>
-                  <option value="admin">Admin</option>
-                </select>
-                <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-400">▾</span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => onSelect(role)}
-                className="w-full rounded-3xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-4 text-sm font-semibold text-white shadow-[0_18px_60px_-30px_rgba(79,70,229,0.8)] transition duration-200 hover:-translate-y-0.5"
-              >
-                Continue as {role === "student" ? "Student" : "Admin"}
-              </button>
-
-              <div className="mt-6 text-sm leading-6 text-slate-400">
-                <p>Use your selected role to enter the specific login flow. You can switch roles by signing out later.</p>
-              </div>
+          {/* Admin Card */}
+          <button
+            type="button"
+            onClick={() => navigate("/login")}
+            className="group relative flex flex-col items-start rounded-3xl border border-white/5 bg-white/[0.03] p-8 text-left transition-all duration-300 hover:border-violet-500/30 hover:bg-white/[0.06] hover:shadow-2xl hover:shadow-violet-500/5 focus:outline-none focus:ring-2 focus:ring-violet-500"
+          >
+            <div className="mb-6 rounded-2xl bg-violet-500/10 p-4 text-violet-400 group-hover:bg-violet-500 group-hover:text-white transition-all duration-300">
+              <Shield size={28} />
             </div>
-          </div>
+            <h2 className="text-xl font-bold text-white mb-2">Admin Portal</h2>
+            <p className="text-sm text-slate-400 leading-relaxed mb-6">
+              Manage student directories, track placements, review institutional progress, and view administrative dashboards.
+            </p>
+            <div className="mt-auto flex items-center gap-2 text-sm font-semibold text-violet-400 group-hover:text-violet-300 transition-colors">
+              Enter Admin Portal <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+            </div>
+          </button>
         </div>
       </div>
     </div>

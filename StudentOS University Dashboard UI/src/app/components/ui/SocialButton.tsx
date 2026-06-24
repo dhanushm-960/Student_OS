@@ -35,7 +35,7 @@ export function SocialButton({ provider, onClick, className = "", children }: So
       aria-label={`Continue with ${provider}`}
     >
       <span className="flex items-center">{provider === "Google" ? googleLogo : msLogo}</span>
-      <span className="text-sm font-600 text-[#111827]">{children ?? `Continue with ${provider}`}</span>
+      <span className="text-sm font-semibold">{children ?? `Continue with ${provider}`}</span>
     </button>
   );
 }

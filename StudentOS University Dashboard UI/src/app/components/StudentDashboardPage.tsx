@@ -56,9 +56,20 @@ function progressColor(value: number) {
   return "bg-amber-500";
 }
 
-export function StudentDashboardPage() {
+export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const readiness = 81;
   const completion = useMemo(() => Math.round((tasks.filter((task) => task.status !== "Not started").length / tasks.length) * 100), []);
+
+  const handleSuggestionClick = (item: string) => {
+    if (!onNavigate) return;
+    if (item === "Ask the AI mentor for a weekly study plan.") {
+      onNavigate("ai-mentor");
+    } else if (item === "Schedule a mock interview for next week." || item === "Review your placement readiness score.") {
+      onNavigate("placement-student");
+    } else if (item === "Add a new task to today’s planner.") {
+      onNavigate("planner");
+    }
+  };
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1.75fr_0.9fr]">
@@ -118,7 +129,7 @@ export function StudentDashboardPage() {
                 <p className="mt-2 text-xl font-semibold text-slate-900">2</p>
               </div>
             </div>
-            <button className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700">
+            <button onClick={() => onNavigate?.("placement-student")} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700">
               <ArrowRight size={16} />
               Review readiness checklist
             </button>
@@ -132,7 +143,7 @@ export function StudentDashboardPage() {
                 <p className="text-sm font-semibold text-slate-500">Today’s tasks</p>
                 <h3 className="mt-2 text-xl font-semibold text-slate-900">3 tasks due</h3>
               </div>
-              <button className="rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-50">Add task</button>
+              <button onClick={() => onNavigate?.("planner")} className="rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-50">Add task</button>
             </div>
             <div className="mt-5 space-y-3">
               {tasks.map((task) => (
@@ -238,13 +249,14 @@ export function StudentDashboardPage() {
             {suggestions.map((item) => (
               <button
                 key={item}
+                onClick={() => handleSuggestionClick(item)}
                 className="rounded-3xl border border-slate-200 px-4 py-3 text-left text-sm text-slate-700 transition hover:border-indigo-300 hover:bg-indigo-50"
               >
                 {item}
               </button>
             ))}
           </div>
-          <button className="mt-5 inline-flex items-center justify-center gap-2 w-full rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700">
+          <button onClick={() => onNavigate?.("ai-mentor")} className="mt-5 inline-flex items-center justify-center gap-2 w-full rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700">
             <MessageSquare size={16} />
             Open AI Mentor
           </button>
@@ -267,7 +279,7 @@ export function StudentDashboardPage() {
               </div>
             ))}
           </div>
-          <button className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700">
+          <button onClick={() => onNavigate?.("profile")} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700">
             <ArrowRight size={14} />
             See all activity
           </button>
