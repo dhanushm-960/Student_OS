@@ -292,7 +292,7 @@ export const getStudents = async (req, res, next) => {
       name: s.user?.name || "Unknown",
       email: s.user?.email || "",
       roll: s.rollNumber,
-      dept: s.department === "Electronics" ? "Electronics" : s.department === "Mechanical" ? "Mechanical" : s.department, // Align UI names if needed
+      dept: s.department === "Electronics" ? "Electronics" : s.department === "Mechanical" ? "Mechanical" : s.department,
       year: s.year,
       gpa: s.gpa,
       attendance: s.attendance,
@@ -301,6 +301,9 @@ export const getStudents = async (req, res, next) => {
       placement: s.placementReadiness,
       goals: s.goalProgress,
       risk: s.riskLevel,
+      placementBreakdown: s.placementBreakdown || { resume: 0, projects: 0, dsa: 0, communication: 0 },
+      careerGoal: s.careerGoal || "",
+      skills: s.skills || [],
     }));
 
     res.json({
@@ -341,6 +344,11 @@ export const getStudentById = async (req, res, next) => {
         goals: student.goalProgress,
         risk: student.riskLevel,
         aiRecommendations: student.aiRecommendations,
+        placementBreakdown: student.placementBreakdown || { resume: 0, projects: 0, dsa: 0, communication: 0 },
+        careerGoal: student.careerGoal || "",
+        skills: student.skills || [],
+        linkedIn: student.linkedIn || "",
+        github: student.github || "",
       },
     });
   } catch (error) {
