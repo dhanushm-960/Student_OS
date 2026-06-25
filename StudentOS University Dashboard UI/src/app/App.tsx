@@ -17,6 +17,7 @@ import { PlannerPage } from "./components/PlannerPage";
 import { AIMentorPage } from "./components/AIMentorPage";
 import { PlacementPage } from "./components/PlacementPage";
 import { StudentProjectsPage } from "./components/StudentProjectsPage";
+import { StudentOnboardingPage } from "./components/StudentOnboardingPage";
 
 import { DashboardPage } from "./components/DashboardPage";
 import { StudentsPage } from "./components/StudentsPage";
@@ -64,6 +65,7 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/login-student" element={<StudentLoginPage />} />
       <Route path="/signup-student" element={<StudentSignupPage />} />
+      <Route path="/student/onboarding" element={<StudentOnboardingPage />} />
 
       {/* Student Protected Routes */}
       <Route element={<DashboardLayout allowedRole="student" />}>

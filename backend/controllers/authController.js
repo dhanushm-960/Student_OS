@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import StudentProfile from "../models/StudentProfile.js";
 import generateToken from "../utils/generateToken.js";
 
 // @desc    Register a new student
@@ -30,6 +31,36 @@ export const registerUser = async (req, res, next) => {
     });
 
     if (user) {
+      if (user.role === "student") {
+        const uniqueNumber = Math.floor(100 + Math.random() * 900);
+        const rollNumber = `STU22${uniqueNumber}`;
+
+        await StudentProfile.create({
+          user: user._id,
+          rollNumber,
+          department: "CSE",
+          year: 1,
+          gpa: 0,
+          attendance: 0,
+          dsaProgress: 0,
+          projectsCompleted: 0,
+          placementReadiness: 0,
+          goalProgress: 0,
+          riskLevel: "Low",
+          university: "Atria University",
+          degree: "",
+          phone: "",
+          location: "",
+          major: "",
+          completedCredits: 0,
+          resumeVersion: "v1.0",
+          setupCompleted: false,
+          aiRecommendations: [
+            "Complete your onboarding profile"
+          ]
+        });
+      }
+
       res.status(201).json({
         success: true,
         token: generateToken(user._id),
@@ -38,6 +69,7 @@ export const registerUser = async (req, res, next) => {
           name: user.name,
           email: user.email,
           role: user.role,
+          setupCompleted: false,
         },
       });
     } else {
@@ -66,6 +98,10 @@ export const loginUser = async (req, res, next) => {
 
     // Verify credentials
     if (user && (await user.comparePassword(password))) {
+      const profile = user.role === "student"
+        ? await StudentProfile.findOne({ user: user._id })
+        : null;
+
       res.json({
         success: true,
         token: generateToken(user._id),
@@ -74,6 +110,7 @@ export const loginUser = async (req, res, next) => {
           name: user.name,
           role: user.role,
           email: user.email,
+          setupCompleted: profile ? profile.setupCompleted : false,
         },
       });
     } else {
@@ -95,6 +132,10 @@ export const getCurrentUser = async (req, res, next) => {
       throw new Error("User not found.");
     }
 
+    const profile = req.user.role === "student"
+      ? await StudentProfile.findOne({ user: req.user._id })
+      : null;
+
     res.json({
       success: true,
       user: {
@@ -102,6 +143,7 @@ export const getCurrentUser = async (req, res, next) => {
         name: req.user.name,
         email: req.user.email,
         role: req.user.role,
+        setupCompleted: profile ? profile.setupCompleted : false,
         createdAt: req.user.createdAt,
         updatedAt: req.user.updatedAt,
       },

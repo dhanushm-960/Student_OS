@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
-  PieChart, Pie, Cell, RadarChart, Radar, PolarGrid,
-  PolarAngleAxis, XAxis, YAxis, CartesianGrid, Tooltip,
+  PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend
 } from "recharts";
 import {
@@ -10,6 +9,7 @@ import {
   Brain, AlertTriangle, CheckCircle, Star, Code, Cpu, BookOpen,
   FolderGit2, Award, Building2, ChevronRight
 } from "lucide-react";
+import { apiRequest } from "../utils/api";
 
 /* ─── Color tokens ─── */
 const C = {
@@ -67,50 +67,52 @@ function SectionTitle({ title, subtitle }: { title: string; subtitle?: string })
 }
 
 /* ─── Section 1: KPI Cards ─── */
-const kpis = [
-  {
-    label: "Total Students",
-    value: "12,450",
-    trend: "+3.2%",
-    up: true,
-    icon: Users,
-    color: C.indigo,
-    bg: "#EEF2FF",
-    sub: "Across all departments",
-  },
-  {
-    label: "Active Users",
-    value: "8,750",
-    trend: "+5.8%",
-    up: true,
-    icon: Zap,
-    color: C.purple,
-    bg: "#F5F3FF",
-    sub: "Last 30 days",
-  },
-  {
-    label: "Placement Readiness",
-    value: "78%",
-    trend: "+2.1%",
-    up: true,
-    icon: Target,
-    color: C.green,
-    bg: "#ECFDF5",
-    sub: "Final year students",
-  },
-  {
-    label: "Student Engagement",
-    value: "85%",
-    trend: "-0.4%",
-    up: false,
-    icon: TrendingUp,
-    color: C.amber,
-    bg: "#FFFBEB",
-    sub: "Platform engagement rate",
-  },
-];
+function OverviewCards({ onNavigate, kpisData }: { onNavigate?: (page: string) => void; kpisData?: any }) {
+  if (!kpisData) return null;
 
-function OverviewCards({ onNavigate }: { onNavigate?: (page: string) => void }) {
+  const kpis = [
+    {
+      label: "Total Students",
+      value: kpisData.totalStudents || "0",
+      trend: "+3.2%",
+      up: true,
+      icon: Users,
+      color: C.indigo,
+      bg: "#EEF2FF",
+      sub: "Across all departments",
+    },
+    {
+      label: "Active Users",
+      value: kpisData.activeUsers || "0",
+      trend: "+5.8%",
+      up: true,
+      icon: Zap,
+      color: C.purple,
+      bg: "#F5F3FF",
+      sub: "Last 30 days",
+    },
+    {
+      label: "Placement Readiness",
+      value: kpisData.placementReadiness || "0%",
+      trend: "+2.1%",
+      up: true,
+      icon: Target,
+      color: C.green,
+      bg: "#ECFDF5",
+      sub: "Final year students",
+    },
+    {
+      label: "Student Engagement",
+      value: kpisData.studentEngagement || "0%",
+      trend: "-0.4%",
+      up: false,
+      icon: TrendingUp,
+      color: C.amber,
+      bg: "#FFFBEB",
+      sub: "Platform engagement rate",
+    },
+  ];
+
   return (
     <div className="grid grid-cols-4 gap-4 mb-6">
       {kpis.map((kpi) => {
@@ -170,39 +172,11 @@ function OverviewCards({ onNavigate }: { onNavigate?: (page: string) => void }) 
 }
 
 /* ─── Section 2: Student Success Charts ─── */
-const monthlyData = [
-  { month: "Jul", active: 6200, new: 420, returning: 5780 },
-  { month: "Aug", active: 7100, new: 980, returning: 6120 },
-  { month: "Sep", active: 8400, new: 1100, returning: 7300 },
-  { month: "Oct", active: 8100, new: 680, returning: 7420 },
-  { month: "Nov", active: 7600, new: 410, returning: 7190 },
-  { month: "Dec", active: 6300, new: 230, returning: 6070 },
-  { month: "Jan", active: 8900, new: 1200, returning: 7700 },
-  { month: "Feb", active: 9200, new: 890, returning: 8310 },
-  { month: "Mar", active: 9500, new: 760, returning: 8740 },
-  { month: "Apr", active: 8750, new: 590, returning: 8160 },
-];
-
-const goalData = [
-  { name: "Completed", value: 62 },
-  { name: "In Progress", value: 24 },
-  { name: "Not Started", value: 14 },
-];
-
-const productivityData = [
-  { week: "W1", score: 72 },
-  { week: "W2", score: 68 },
-  { week: "W3", score: 75 },
-  { week: "W4", score: 80 },
-  { week: "W5", score: 74 },
-  { week: "W6", score: 82 },
-  { week: "W7", score: 79 },
-  { week: "W8", score: 85 },
-];
-
 const GOAL_COLORS = [C.indigo, C.cyan, "#E5E7EB"];
 
-function StudentSuccessCharts() {
+function StudentSuccessCharts({ monthlyData, goalData, productivityData }: { monthlyData?: any[]; goalData?: any[]; productivityData?: any[] }) {
+  if (!monthlyData || !goalData || !productivityData) return null;
+
   return (
     <div className="mb-6">
       <SectionTitle
@@ -333,18 +307,13 @@ function StudentSuccessCharts() {
 }
 
 /* ─── Section 3: Placement Analytics ─── */
-const dsaData = [
-  { level: "Beginner", count: 2100 },
-  { level: "Intermediate", count: 3400 },
-  { level: "Advanced", count: 1800 },
-  { level: "Expert", count: 650 },
-];
+function PlacementSection({ placementStats, dsaData }: { placementStats?: any; dsaData?: any[] }) {
+  if (!placementStats || !dsaData) return null;
 
-function PlacementSection() {
   const stats = [
-    { label: "Placement Ready", value: "4,820", pct: 78, color: C.indigo },
-    { label: "Internship Ready", value: "6,230", pct: 85, color: C.purple },
-    { label: "Resume Completion", value: "7,480", pct: 91, color: C.green },
+    { label: "Placement Ready", value: placementStats.placementReady || "0", pct: 78, color: C.indigo },
+    { label: "Internship Ready", value: placementStats.internshipReady || "0", pct: 85, color: C.purple },
+    { label: "Resume Completion", value: placementStats.resumeCompletion || "0", pct: 91, color: C.green },
   ];
 
   return (
@@ -390,7 +359,7 @@ function PlacementSection() {
               <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} />
               <Bar dataKey="count" radius={[6, 6, 0, 0]}>
                 {dsaData.map((_, i) => (
-                  <Cell key={`dsa-cell-${i}`} fill={[C.indigo, C.purple, C.cyan, C.green][i]} />
+                  <Cell key={`dsa-cell-${i}`} fill={[C.indigo, C.purple, C.cyan, C.green][i % 4]} />
                 ))}
               </Bar>
             </BarChart>
@@ -405,13 +374,13 @@ function PlacementSection() {
             <span className="text-sm font-600 text-white">AI Insight</span>
           </div>
           <p className="text-sm text-indigo-200 leading-relaxed mb-4">
-            3rd year CSE students have <span className="text-white font-600">lower project completion rates</span> compared to the previous semester — down 14%.
+            Recent updates: final year placements are tracking <span className="text-white font-600">higher readiness</span> across engineering, up {placementStats.placementReady ? "14%" : "0%"}.
           </p>
           <div className="space-y-2">
             {[
-              "Resume workshops needed for 340 students",
-              "Mock interview gap: 28% in CSE",
-              "GitHub contribution avg: 12 commits/month",
+              `Resume workshops completed for ${placementStats.resumeCompletion || 0} students`,
+              `Mock interviews targeted: ${placementStats.placementReady || 0} students ready`,
+              `Average GPA of candidates: ${placementStats.avgGpa || "0.0"}/10.0`,
             ].map((item) => (
               <div key={item} className="flex items-start gap-2 text-xs text-indigo-300">
                 <ChevronRight size={12} className="mt-0.5 flex-shrink-0" />
@@ -426,15 +395,9 @@ function PlacementSection() {
 }
 
 /* ─── Section 4: Department Performance ─── */
-const deptData = [
-  { dept: "CSE", productivity: 82, placement: 88, assignment: 79, engagement: 85 },
-  { dept: "IT", productivity: 78, placement: 91, assignment: 82, engagement: 80 },
-  { dept: "ECE", productivity: 70, placement: 72, assignment: 74, engagement: 71 },
-  { dept: "Mech", productivity: 65, placement: 61, assignment: 68, engagement: 63 },
-  { dept: "Civil", productivity: 60, placement: 55, assignment: 63, engagement: 59 },
-];
+function DepartmentPerformance({ deptData, rankedDepts }: { deptData?: any[]; rankedDepts?: any[] }) {
+  if (!deptData || !rankedDepts) return null;
 
-function DepartmentPerformance() {
   return (
     <div className="mb-6">
       <SectionTitle title="Department Performance" subtitle="Comparative metrics across all departments" />
@@ -466,13 +429,7 @@ function DepartmentPerformance() {
             Department Rankings
           </div>
           <div className="space-y-3">
-            {[
-              { name: "Information Technology", score: 82, medal: "🥇" },
-              { name: "Computer Science", score: 79, medal: "🥈" },
-              { name: "Electronics", score: 71, medal: "🥉" },
-              { name: "Mechanical", score: 64, medal: "4th" },
-              { name: "Civil", medal: "5th", score: 59 },
-            ].map((d) => (
+            {rankedDepts.map((d) => (
               <div key={d.name} className="flex items-center gap-3">
                 <div className="text-sm w-6 text-center">{d.medal}</div>
                 <div className="flex-1 min-w-0">
@@ -502,22 +459,15 @@ function DepartmentPerformance() {
 }
 
 /* ─── Section 5: At-Risk Students ─── */
-const atRiskStudents = [
-  { name: "Rahul Sharma", dept: "Mechanical", attendance: "51%", score: 34, risk: "High" },
-  { name: "Priya Nair", dept: "Civil", attendance: "58%", score: 41, risk: "High" },
-  { name: "Arjun Mehta", dept: "Electronics", attendance: "63%", score: 48, risk: "Medium" },
-  { name: "Sneha Patel", dept: "CSE", attendance: "67%", score: 52, risk: "Medium" },
-  { name: "Kiran Kumar", dept: "IT", attendance: "70%", score: 55, risk: "Medium" },
-  { name: "Divya Reddy", dept: "Mechanical", attendance: "55%", score: 38, risk: "High" },
-];
-
 const riskColors: Record<string, { bg: string; text: string }> = {
   High: { bg: "#FFF1F2", text: "#F43F5E" },
   Medium: { bg: "#FFFBEB", text: "#D97706" },
   Low: { bg: "#ECFDF5", text: "#059669" },
 };
 
-function AtRiskStudents() {
+function AtRiskStudents({ atRiskStudents, placementStats }: { atRiskStudents?: any[]; placementStats?: any }) {
+  if (!atRiskStudents) return null;
+
   return (
     <div className="mb-6">
       <SectionTitle title="At-Risk Students" subtitle="Students requiring academic intervention" />
@@ -528,7 +478,7 @@ function AtRiskStudents() {
         >
           <AlertTriangle size={16} style={{ color: "#F59E0B" }} />
           <p className="text-sm" style={{ color: "#92400E" }}>
-            <span className="font-600">AI Recommendation:</span> 132 students may require academic intervention this month. Immediate outreach suggested for 48 high-risk students.
+            <span className="font-600">AI Recommendation:</span> {placementStats?.atRiskCount || 0} students may require academic intervention this month. Immediate outreach suggested.
           </p>
         </div>
 
@@ -548,70 +498,79 @@ function AtRiskStudents() {
               </tr>
             </thead>
             <tbody>
-              {atRiskStudents.map((s, i) => (
-                <tr
-                  key={s.name}
-                  className="transition-colors hover:bg-indigo-50/50"
-                  style={{ borderTop: i > 0 ? "1px solid rgba(79,70,229,0.06)" : "none" }}
-                >
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-600"
-                        style={{ background: `linear-gradient(135deg, ${C.indigo}, ${C.purple})` }}
-                      >
-                        {s.name[0]}
-                      </div>
-                      <span className="text-sm font-500" style={{ color: "var(--foreground)" }}>
-                        {s.name}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm" style={{ color: "var(--muted-foreground)" }}>
-                    {s.dept}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className="text-sm font-500"
-                      style={{ color: parseInt(s.attendance) < 60 ? C.rose : "var(--foreground)" }}
-                    >
-                      {s.attendance}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="h-1.5 w-20 rounded-full" style={{ background: "#EEF2FF" }}>
-                        <div
-                          className="h-1.5 rounded-full"
-                          style={{
-                            width: `${s.score}%`,
-                            background: s.score < 45 ? C.rose : s.score < 60 ? C.amber : C.green,
-                          }}
-                        />
-                      </div>
-                      <span className="text-xs font-500" style={{ color: "var(--foreground)" }}>
-                        {s.score}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className="px-2 py-0.5 rounded-full text-xs font-600"
-                      style={riskColors[s.risk]}
-                    >
-                      {s.risk}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      className="text-xs font-500 px-3 py-1 rounded-lg transition-colors"
-                      style={{ color: C.indigo, background: "#EEF2FF" }}
-                    >
-                      Reach Out
-                    </button>
+              {atRiskStudents.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-4 text-center text-sm text-slate-400">
+                    No at-risk students currently detected. Excellent!
                   </td>
                 </tr>
-              ))}
+              ) : (
+                atRiskStudents.map((s, i) => (
+                  <tr
+                    key={s.id || s.name}
+                    className="transition-colors hover:bg-indigo-50/50"
+                    style={{ borderTop: i > 0 ? "1px solid rgba(79,70,229,0.06)" : "none" }}
+                  >
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-600"
+                          style={{ background: `linear-gradient(135deg, ${C.indigo}, ${C.purple})` }}
+                        >
+                          {s.name[0]}
+                        </div>
+                        <span className="text-sm font-500" style={{ color: "var(--foreground)" }}>
+                          {s.name}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm" style={{ color: "var(--muted-foreground)" }}>
+                      {s.dept}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className="text-sm font-500"
+                        style={{ color: parseInt(s.attendance) < 75 ? C.rose : "var(--foreground)" }}
+                      >
+                        {s.attendance}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="h-1.5 w-20 rounded-full" style={{ background: "#EEF2FF" }}>
+                          <div
+                            className="h-1.5 rounded-full"
+                            style={{
+                              width: `${s.score}%`,
+                              background: s.score < 45 ? C.rose : s.score < 60 ? C.amber : C.green,
+                            }}
+                          />
+                        </div>
+                        <span className="text-xs font-500" style={{ color: "var(--foreground)" }}>
+                          {s.score}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className="px-2 py-0.5 rounded-full text-xs font-600"
+                        style={riskColors[s.risk] || riskColors.Low}
+                      >
+                        {s.risk}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        className="text-xs font-500 px-3 py-1 rounded-lg transition-colors"
+                        style={{ color: C.indigo, background: "#EEF2FF" }}
+                        onClick={() => alert(`Outreach email generated for ${s.name} (${s.dept})`)}
+                      >
+                        Reach Out
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -621,22 +580,6 @@ function AtRiskStudents() {
 }
 
 /* ─── Section 6: Skill Development ─── */
-const skillData = [
-  { skill: "Data Structures", enrolled: 3200, completed: 2100, growth: 28 },
-  { skill: "Full Stack Dev", enrolled: 2800, completed: 1650, growth: 35 },
-  { skill: "Machine Learning", enrolled: 2100, completed: 980, growth: 42 },
-  { skill: "Aptitude & Reasoning", enrolled: 4100, completed: 3200, growth: 15 },
-  { skill: "System Design", enrolled: 1200, completed: 480, growth: 55 },
-];
-
-const heatmapData = [
-  { dept: "CSE", dsa: 88, fullstack: 75, ml: 82, aptitude: 79 },
-  { dept: "IT", dsa: 72, fullstack: 88, ml: 65, aptitude: 80 },
-  { dept: "ECE", dsa: 60, fullstack: 45, ml: 70, aptitude: 72 },
-  { dept: "Mech", dsa: 40, fullstack: 30, ml: 35, aptitude: 65 },
-  { dept: "Civil", dsa: 35, fullstack: 28, ml: 30, aptitude: 60 },
-];
-
 function heatColor(val: number) {
   if (val >= 80) return { bg: "#312E81", text: "#C7D2FE" };
   if (val >= 65) return { bg: "#4F46E5", text: "white" };
@@ -645,7 +588,9 @@ function heatColor(val: number) {
   return { bg: "#EEF2FF", text: "#6B7280" };
 }
 
-function SkillDevelopment() {
+function SkillDevelopment({ skillData, heatmapData }: { skillData?: any[]; heatmapData?: any[] }) {
+  if (!skillData || !heatmapData) return null;
+
   return (
     <div className="mb-6">
       <SectionTitle title="Skill Development Insights" subtitle="Top skills learned and department-wise progress" />
@@ -753,19 +698,14 @@ function SkillDevelopment() {
 }
 
 /* ─── Section 7: Project Analytics ─── */
-const topProjects = [
-  { title: "AI-Powered Traffic Management", team: "CSE – Team Alpha", score: 96, tags: ["ML", "IoT"] },
-  { title: "Blockchain Supply Chain Tracker", team: "IT – Team Nexus", score: 93, tags: ["Web3", "React"] },
-  { title: "Smart Campus Energy Monitor", team: "ECE – Team Volt", score: 89, tags: ["Embedded", "Cloud"] },
-  { title: "Predictive Healthcare Dashboard", team: "CSE – Team Sigma", score: 87, tags: ["Python", "ML"] },
-];
+function ProjectAnalytics({ projectStats, topProjects }: { projectStats?: any; topProjects?: any[] }) {
+  if (!projectStats || !topProjects) return null;
 
-function ProjectAnalytics() {
   const stats = [
-    { label: "Active Projects", value: "284", icon: FolderGit2, color: C.indigo, bg: "#EEF2FF" },
-    { label: "Completed", value: "156", icon: CheckCircle, color: C.green, bg: "#ECFDF5" },
-    { label: "Collaboration Score", value: "87%", icon: Users, color: C.purple, bg: "#F5F3FF" },
-    { label: "Innovation Index", value: "9.2/10", icon: Star, color: C.amber, bg: "#FFFBEB" },
+    { label: "Active Projects", value: projectStats.totalProjects, icon: FolderGit2, color: C.indigo, bg: "#EEF2FF" },
+    { label: "Completed", value: projectStats.completedProjectsCount, icon: CheckCircle, color: C.green, bg: "#ECFDF5" },
+    { label: "Collaboration Score", value: projectStats.collaborationScore, icon: Users, color: C.purple, bg: "#F5F3FF" },
+    { label: "Innovation Index", value: projectStats.innovationIndex, icon: Star, color: C.amber, bg: "#FFFBEB" },
   ];
 
   return (
@@ -822,7 +762,7 @@ function ProjectAnalytics() {
                   {p.team}
                 </div>
                 <div className="flex items-center gap-2 mt-1.5">
-                  {p.tags.map((t) => (
+                  {p.tags && p.tags.map((t: string) => (
                     <span
                       key={t}
                       className="text-xs px-1.5 py-0.5 rounded-md font-500"
@@ -845,24 +785,9 @@ function ProjectAnalytics() {
 }
 
 /* ─── Section 8: Placement Dashboard ─── */
-const companyData = [
-  { company: "Google", placed: 18, color: C.indigo },
-  { company: "Microsoft", placed: 24, color: C.purple },
-  { company: "Amazon", placed: 31, color: C.cyan },
-  { company: "Infosys", placed: 52, color: C.green },
-  { company: "TCS", placed: 48, color: C.amber },
-  { company: "Wipro", placed: 39, color: "#F43F5E" },
-];
+function PlacementDashboard({ companyData, topRecruiters }: { companyData?: any[]; topRecruiters?: any[] }) {
+  if (!companyData || !topRecruiters) return null;
 
-const topRecruiters = [
-  { name: "Infosys", logo: "IN", offers: 52, salary: "₹5.2L", type: "Mass" },
-  { name: "TCS", logo: "TC", offers: 48, salary: "₹4.8L", type: "Mass" },
-  { name: "Wipro", logo: "WI", offers: 39, salary: "₹5.0L", type: "Mass" },
-  { name: "Microsoft", logo: "MS", offers: 24, salary: "₹28L", type: "Dream" },
-  { name: "Amazon", logo: "AZ", offers: 31, salary: "₹22L", type: "Super Dream" },
-];
-
-function PlacementDashboard() {
   const pstats = [
     { label: "Internship Applications", value: "3,240", trend: "+12%", up: true },
     { label: "Placement Applications", value: "2,180", trend: "+8%", up: true },
@@ -915,7 +840,7 @@ function PlacementDashboard() {
               <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} />
               <Bar dataKey="placed" name="Placed" radius={[0, 6, 6, 0]}>
                 {companyData.map((c, i) => (
-                  <Cell key={`company-cell-${i}`} fill={c.color} />
+                  <Cell key={`company-cell-${i}`} fill={c.color || C.indigo} />
                 ))}
               </Bar>
             </BarChart>
@@ -948,7 +873,7 @@ function PlacementDashboard() {
                   style={{
                     background:
                       r.type === "Dream"
-                        ? "#EEF2FF"
+                         ? "#EEF2FF"
                         : r.type === "Super Dream"
                         ? "#F5F3FF"
                         : "#F0FDF4",
@@ -972,58 +897,28 @@ function PlacementDashboard() {
 }
 
 /* ─── Section 9: AI Insights Panel ─── */
-const aiInsights = [
-  {
-    icon: TrendingUp,
-    color: C.rose,
-    bg: "#FFF1F2",
-    title: "Engagement Drop Detected",
-    body: "Student engagement drops by 18% during examination periods. Recommend scheduling wellness check-ins proactively.",
-    tag: "Behavioral",
-  },
-  {
-    icon: Award,
-    color: C.green,
-    bg: "#ECFDF5",
-    title: "Top Performing Department",
-    body: "IT Department has the highest placement readiness score at 91%. Key factor: consistent project submissions.",
-    tag: "Achievement",
-  },
-  {
-    icon: Brain,
-    color: C.indigo,
-    bg: "#EEF2FF",
-    title: "Interview Preparation Gap",
-    body: "Final year students need additional support in mock interviews. Only 34% have completed at least 3 practice sessions.",
-    tag: "Action Required",
-  },
-  {
-    icon: Code,
-    color: C.purple,
-    bg: "#F5F3FF",
-    title: "Coding Activity Surge",
-    body: "GitHub commits up 32% in final year. Hackathon participation drives the spike — 240 students in active projects.",
-    tag: "Positive Signal",
-  },
-  {
-    icon: Building2,
-    color: C.amber,
-    bg: "#FFFBEB",
-    title: "Department Gap Alert",
-    body: "Civil Engineering shows lowest placement readiness at 55%. Recommend targeted skill workshops and industry exposure.",
-    tag: "Intervention",
-  },
-  {
-    icon: Cpu,
-    color: C.cyan,
-    bg: "#ECFEFF",
-    title: "ML Skill Growth",
-    body: "Machine learning course completions grew 42% YoY. Student-led study groups correlate with higher completion rates.",
-    tag: "Insight",
-  },
-];
+function AIInsightsPanel({ onNavigate, insights }: { onNavigate?: (page: string) => void; insights?: any[] }) {
+  if (!insights) return null;
 
-function AIInsightsPanel({ onNavigate }: { onNavigate?: (page: string) => void }) {
+  // Map icons and colors dynamically
+  const getIcon = (title: string) => {
+    if (title.includes("Engagement")) return TrendingUp;
+    if (title.includes("Performing")) return Award;
+    if (title.includes("Interview")) return Brain;
+    if (title.includes("Coding")) return Code;
+    if (title.includes("Gap")) return Building2;
+    return Cpu;
+  };
+  
+  const getColors = (title: string) => {
+    if (title.includes("Engagement")) return { color: C.rose, bg: "#FFF1F2" };
+    if (title.includes("Performing")) return { color: C.green, bg: "#ECFDF5" };
+    if (title.includes("Interview")) return { color: C.indigo, bg: "#EEF2FF" };
+    if (title.includes("Coding")) return { color: C.purple, bg: "#F5F3FF" };
+    if (title.includes("Gap")) return { color: C.amber, bg: "#FFFBEB" };
+    return { color: C.cyan, bg: "#ECFEFF" };
+  };
+
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-5">
@@ -1047,8 +942,10 @@ function AIInsightsPanel({ onNavigate }: { onNavigate?: (page: string) => void }
         </div>
       </div>
       <div className="grid grid-cols-3 gap-4">
-        {aiInsights.map((insight) => {
-          const Icon = insight.icon;
+        {insights.map((insight) => {
+          const Icon = getIcon(insight.title);
+          const styles = getColors(insight.title);
+          
           const handleClick = () => {
             if (!onNavigate) return;
             if (insight.title === "Engagement Drop Detected") onNavigate("academic");
@@ -1067,19 +964,19 @@ function AIInsightsPanel({ onNavigate }: { onNavigate?: (page: string) => void }
               <div className="flex items-start gap-3">
                 <div
                   className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: insight.bg }}
+                  style={{ background: styles.bg }}
                 >
-                  <Icon size={16} style={{ color: insight.color }} />
+                  <Icon size={16} style={{ color: styles.color }} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-600" style={{ color: "var(--foreground)" }}>
+                    <span className="text-sm font-600 text-slate-800" style={{ color: "var(--foreground)" }}>
                       {insight.title}
                     </span>
                   </div>
                   <span
                     className="text-xs px-2 py-0.5 rounded-full font-500"
-                    style={{ background: insight.bg, color: insight.color }}
+                    style={{ background: styles.bg, color: styles.color }}
                   >
                     {insight.tag}
                   </span>
@@ -1098,39 +995,92 @@ function AIInsightsPanel({ onNavigate }: { onNavigate?: (page: string) => void }
 
 /* ─── Main Dashboard Page ─── */
 export function DashboardPage({ section, onNavigate }: { section?: string; onNavigate?: (page: string) => void }) {
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    async function fetchStats() {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await apiRequest("/api/admin/dashboard-stats");
+        if (active) {
+          setStats(data);
+        }
+      } catch (err: any) {
+        if (active) {
+          setError(err.message || "Failed to load dashboard statistics.");
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    fetchStats();
+    return () => { active = false; };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex gap-2">
+            <span className="w-3.5 h-3.5 bg-indigo-500 rounded-full animate-bounce" />
+            <span className="w-3.5 h-3.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.2s]" />
+            <span className="w-3.5 h-3.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.4s]" />
+          </div>
+          <span className="text-sm text-indigo-400 font-500 animate-pulse">Loading dashboard metrics...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-center font-medium">
+        {error}
+      </div>
+    );
+  }
+
   if (section) {
     switch (section) {
       case "placement":
         return (
           <div>
-            <PlacementDashboard />
+            <PlacementDashboard companyData={stats.companyData} topRecruiters={stats.topRecruiters} />
           </div>
         );
       case "departments":
         return (
           <div>
-            <DepartmentPerformance />
+            <DepartmentPerformance deptData={stats.deptData} rankedDepts={stats.rankedDepts} />
           </div>
         );
       case "academic":
         return (
           <div>
-            <DepartmentPerformance />
-            <AtRiskStudents />
+            <DepartmentPerformance deptData={stats.deptData} rankedDepts={stats.rankedDepts} />
+            <AtRiskStudents atRiskStudents={stats.atRiskStudents} placementStats={stats.placementStats} />
           </div>
         );
       case "projects":
         return (
           <div>
-            <ProjectAnalytics />
+            <ProjectAnalytics projectStats={stats.projectStats} topProjects={stats.topProjects} />
           </div>
         );
       default:
         return (
           <div className="space-y-6">
-            <OverviewCards onNavigate={onNavigate} />
-            <StudentSuccessCharts />
-            <AIInsightsPanel onNavigate={onNavigate} />
+            <OverviewCards onNavigate={onNavigate} kpisData={stats.kpis} />
+            <StudentSuccessCharts 
+              monthlyData={stats.monthlyData} 
+              goalData={stats.goalData} 
+              productivityData={stats.productivityData} 
+            />
+            <AIInsightsPanel onNavigate={onNavigate} insights={stats.aiInsights} />
           </div>
         );
     }
@@ -1138,14 +1088,25 @@ export function DashboardPage({ section, onNavigate }: { section?: string; onNav
 
   return (
     <div>
-      <OverviewCards onNavigate={onNavigate} />
-      <StudentSuccessCharts />
-      <PlacementSection />
-      <DepartmentPerformance />
-      <AtRiskStudents />
-      <ProjectAnalytics />
-      <PlacementDashboard />
-      <AIInsightsPanel onNavigate={onNavigate} />
+      <OverviewCards onNavigate={onNavigate} kpisData={stats.kpis} />
+      <div className="h-6" />
+      <StudentSuccessCharts 
+        monthlyData={stats.monthlyData} 
+        goalData={stats.goalData} 
+        productivityData={stats.productivityData} 
+      />
+      <div className="h-6" />
+      <PlacementSection placementStats={stats.placementStats} dsaData={stats.dsaData} />
+      <div className="h-6" />
+      <DepartmentPerformance deptData={stats.deptData} rankedDepts={stats.rankedDepts} />
+      <div className="h-6" />
+      <AtRiskStudents atRiskStudents={stats.atRiskStudents} placementStats={stats.placementStats} />
+      <div className="h-6" />
+      <ProjectAnalytics projectStats={stats.projectStats} topProjects={stats.topProjects} />
+      <div className="h-6" />
+      <PlacementDashboard companyData={stats.companyData} topRecruiters={stats.topRecruiters} />
+      <div className="h-6" />
+      <AIInsightsPanel onNavigate={onNavigate} insights={stats.aiInsights} />
     </div>
   );
 }

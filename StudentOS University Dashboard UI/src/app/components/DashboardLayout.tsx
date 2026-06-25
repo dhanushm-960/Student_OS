@@ -31,6 +31,11 @@ export function DashboardLayout({ allowedRole }: { allowedRole: "admin" | "stude
     return <Navigate to={targetDashboard} replace />;
   }
 
+  // Redirect to onboarding if student has not completed setup
+  if (profile.role === "student" && !profile.setupCompleted) {
+    return <Navigate to="/student/onboarding" replace />;
+  }
+
   // Map current location pathname to activePage, title, and subtitle
   const pathname = location.pathname;
   let activePage = "";
