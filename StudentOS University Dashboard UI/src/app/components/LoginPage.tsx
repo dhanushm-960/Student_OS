@@ -21,16 +21,16 @@ export function LoginPage() {
     }
     setLoading(true);
     try {
-      const { profile } = await signIn(email, password);
-      if (profile?.role === "admin") {
+      const { user } = await signIn(email, password);
+      if (user?.role === "admin") {
         navigate("/admin/dashboard");
       } else {
         // Log them out immediately if they don't have the admin role
         await signOut();
-        setError("Access denied. Admin role required.");
+        setError("Access denied. This portal is for admins only.");
       }
     } catch (err: any) {
-      setError(err.message || "Invalid credentials.");
+      setError(err.message || "Invalid email or password.");
     } finally {
       setLoading(false);
     }

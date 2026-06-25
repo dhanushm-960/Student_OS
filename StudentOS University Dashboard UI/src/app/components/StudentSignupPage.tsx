@@ -53,7 +53,7 @@ export function StudentSignupPage() {
       await signUp(email, password, name);
       setSuccess(true);
       setTimeout(() => {
-        navigate("/student/dashboard");
+        navigate("/student/onboarding");
       }, 2500);
     } catch (err: any) {
       setErrors({ general: err.message || "An error occurred during registration." });

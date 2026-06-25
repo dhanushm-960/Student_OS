@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import StudentProfile from "../models/StudentProfile.js";
 import generateToken from "../utils/generateToken.js";
 
 // @desc    Register a new student
@@ -30,6 +31,39 @@ export const registerUser = async (req, res, next) => {
     });
 
     if (user) {
+      if (user.role === "student") {
+        const depts = ["CSE", "IT", "Electronics", "Mechanical", "Civil"];
+        const department = depts[Math.floor(Math.random() * depts.length)];
+        const uniqueNumber = Math.floor(100 + Math.random() * 900);
+        const rollNumber = `${department}22${uniqueNumber}`;
+
+        await StudentProfile.create({
+          user: user._id,
+          rollNumber,
+          department,
+          year: 1,
+          gpa: parseFloat((7.0 + Math.random() * 2.5).toFixed(2)),
+          attendance: Math.floor(75 + Math.random() * 22),
+          dsaProgress: Math.floor(30 + Math.random() * 40),
+          projectsCompleted: Math.floor(Math.random() * 3),
+          placementReadiness: Math.floor(30 + Math.random() * 40),
+          goalProgress: Math.floor(40 + Math.random() * 30),
+          riskLevel: "Low",
+          university: "Atria University",
+          degree: "B.Tech Computer Science",
+          phone: "+91 98765 43210",
+          location: "Bangalore, India",
+          major: "Artificial Intelligence",
+          completedCredits: 12,
+          resumeVersion: "v1.0",
+          aiRecommendations: [
+            "Complete your onboarding profile",
+            "Schedule a counseling session with your academic mentor",
+            "Update your skills and resume in the planner portal"
+          ]
+        });
+      }
+
       res.status(201).json({
         success: true,
         token: generateToken(user._id),

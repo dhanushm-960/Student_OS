@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
+import studentRoutes from "./routes/studentRoutes.js";
 
 // Load environment variables
 dotenv.config();
@@ -27,6 +29,8 @@ app.get("/", (req, res) => {
 
 // API Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/student", studentRoutes);
 
 // 404 Route handler
 app.use((req, res, next) => {
