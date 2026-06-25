@@ -39,15 +39,15 @@ export function StudentLoginPage() {
     setLoading(true);
     setErrors({});
     try {
-      const { profile } = await signIn(email, password);
-      if (profile?.role === "student") {
+      const { user } = await signIn(email, password);
+      if (user?.role === "student") {
         navigate("/student/dashboard");
       } else {
         await signOut();
-        setErrors({ general: "Access denied. Student role required." });
+        setErrors({ general: "Access denied. This portal is for students only." });
       }
     } catch (err: any) {
-      setErrors({ general: err.message || "Invalid credentials." });
+      setErrors({ general: err.message || "Invalid email or password." });
     } finally {
       setLoading(false);
     }
