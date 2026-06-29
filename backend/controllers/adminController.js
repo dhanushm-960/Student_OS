@@ -304,6 +304,8 @@ export const getStudents = async (req, res, next) => {
       placementBreakdown: s.placementBreakdown || { resume: 0, projects: 0, dsa: 0, communication: 0 },
       careerGoal: s.careerGoal || "",
       skills: s.skills || [],
+      resumeDetails: s.resumeDetails || { score: 0, skills: [], education: "", projects: [], technologies: [], suggestions: [], fileName: "" },
+      placementPrediction: s.placementPrediction || { potential: "Medium", score: 50, recs: [] },
     }));
 
     res.json({
@@ -349,6 +351,8 @@ export const getStudentById = async (req, res, next) => {
         skills: student.skills || [],
         linkedIn: student.linkedIn || "",
         github: student.github || "",
+        resumeDetails: student.resumeDetails || { score: 0, skills: [], education: "", projects: [], technologies: [], suggestions: [], fileName: "" },
+        placementPrediction: student.placementPrediction || { potential: "Medium", score: 50, recs: [] },
       },
     });
   } catch (error) {

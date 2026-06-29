@@ -130,6 +130,22 @@ const studentProfileSchema = new mongoose.Schema(
       type: String,
       default: "v1.0",
     },
+    resumeDetails: {
+      score: { type: Number, default: 0 },
+      skills: { type: [String], default: [] },
+      education: { type: String, default: "" },
+      projects: { type: [String], default: [] },
+      technologies: { type: [String], default: [] },
+      suggestions: { type: [String], default: [] },
+      fileName: { type: String, default: "" },
+      uploadedAt: { type: Date }
+    },
+    placementPrediction: {
+      potential: { type: String, enum: ["High", "Medium", "Low"], default: "Medium" },
+      score: { type: Number, default: 50 },
+      recs: { type: [String], default: [] },
+      lastCalculated: { type: Date, default: Date.now }
+    }
   },
   {
     timestamps: true,

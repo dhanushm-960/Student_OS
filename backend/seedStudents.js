@@ -142,6 +142,20 @@ async function seed() {
 
     console.log(`🎉 Seeded ${createdUsers.length} student users.`);
     console.log(`🎉 Seeded ${createdProfiles.length} student profiles.`);
+
+    // 4. Seed Companies
+    const Company = (await import("./models/Company.js")).default;
+    await Company.deleteMany({});
+    const companiesToCreate = [
+      { name: "Google", role: "Software Engineer - ML", salary: "₹32L", type: "Super Dream", minGpa: 8.5, requiredSkills: ["Python", "Machine Learning", "Algorithms"], preferredTech: ["Python", "Git"], logo: "G" },
+      { name: "Microsoft", role: "Software Engineer", salary: "₹28L", type: "Super Dream", minGpa: 8.0, requiredSkills: ["Java", "C++", "Data Structures"], preferredTech: ["Git"], logo: "MS" },
+      { name: "Amazon", role: "SDE-1", salary: "₹24L", type: "Dream", minGpa: 7.5, requiredSkills: ["SQL", "Data Structures", "Algorithms"], preferredTech: ["Docker", "Git"], logo: "AZ" },
+      { name: "TCS", role: "Systems Engineer", salary: "₹4.5L", type: "Mass Recruiter", minGpa: 6.0, requiredSkills: ["HTML/CSS", "JavaScript"], preferredTech: ["React"], logo: "TC" },
+      { name: "Infosys", role: "Systems Engineer Specialist", salary: "₹6.5L", type: "Mass Recruiter", minGpa: 6.5, requiredSkills: ["SQL", "JavaScript"], preferredTech: ["Node.js"], logo: "IN" }
+    ];
+    await Company.insertMany(companiesToCreate);
+    console.log(`🏢 Seeded ${companiesToCreate.length} company recruitment requirements.`);
+    
     console.log("   Default Student Password: Student@123");
     
     process.exit(0);

@@ -49,6 +49,8 @@ export const getOwnProfile = async (req, res, next) => {
         github: profile.github || "",
         placementBreakdown: profile.placementBreakdown || { resume: 0, projects: 0, dsa: 0, communication: 0 },
         setupCompleted: profile.setupCompleted || false,
+        resumeDetails: profile.resumeDetails || { score: 0, skills: [], education: "", projects: [], technologies: [], suggestions: [], fileName: "" },
+        placementPrediction: profile.placementPrediction || { potential: "Medium", score: 50, recs: [] },
       },
     });
   } catch (error) {
@@ -576,13 +578,16 @@ export const recalculatePlacement = async (req, res, next) => {
       Goal.find({ student: userId }),
     ]);
 
-    // Resume score: base 40 + bonus for having skills, LinkedIn, GitHub
-    let resumeScore = 40;
-    if (profile.skills && profile.skills.length > 0) resumeScore += Math.min(20, profile.skills.length * 5);
-    if (profile.linkedIn) resumeScore += 10;
-    if (profile.github) resumeScore += 10;
-    if (profile.careerGoal) resumeScore += 10;
-    if (profile.resumeVersion && profile.resumeVersion !== "v1.0") resumeScore += 10;
+    // Resume score: use parsed resume score if available, otherwise fallback to heuristics
+    let resumeScore = profile.resumeDetails?.score || 0;
+    if (resumeScore === 0) {
+      resumeScore = 40;
+      if (profile.skills && profile.skills.length > 0) resumeScore += Math.min(20, profile.skills.length * 5);
+      if (profile.linkedIn) resumeScore += 10;
+      if (profile.github) resumeScore += 10;
+      if (profile.careerGoal) resumeScore += 10;
+      if (profile.resumeVersion && profile.resumeVersion !== "v1.0") resumeScore += 10;
+    }
     resumeScore = Math.min(100, resumeScore);
 
     // Projects score: based on actual project count

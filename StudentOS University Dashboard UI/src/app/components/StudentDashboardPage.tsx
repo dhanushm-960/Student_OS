@@ -149,6 +149,7 @@ function AddGoalModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: 
 export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const [profileData, setProfileData] = useState<any>(null);
   const [progressData, setProgressData] = useState<any>(null);
+  const [aiRecs, setAiRecs] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddAssignment, setShowAddAssignment] = useState(false);
@@ -156,9 +157,13 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
 
   const fetchData = async () => {
     try {
-      const [profileRes, progressRes] = await Promise.all([
+      const [profileRes, progressRes, aiRes] = await Promise.all([
         apiRequest("/api/student/profile"),
         apiRequest("/api/student/progress"),
+        apiRequest("/api/student/ai-recommendations").catch(err => {
+          console.error("AI recommendations call failed:", err);
+          return { success: false };
+        })
       ]);
       if (profileRes.success && profileRes.profile) {
         setProfileData(profileRes.profile);
@@ -167,6 +172,9 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
       }
       if (progressRes.success) {
         setProgressData(progressRes);
+      }
+      if (aiRes.success) {
+        setAiRecs(aiRes);
       }
     } catch (err: any) {
       setError(err.message || "An error occurred while fetching data.");
@@ -191,6 +199,10 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
           placement: placementRes.placementReadiness,
           placementBreakdown: placementRes.placementBreakdown,
         }));
+      }
+      const aiRes = await apiRequest("/api/student/ai-recommendations").catch(() => null);
+      if (aiRes && aiRes.success) {
+        setAiRecs(aiRes);
       }
     } catch (err) {
       console.error("Failed to refresh progress:", err);
@@ -340,6 +352,69 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
       {showAddGoal && <AddGoalModal onClose={() => setShowAddGoal(false)} onSuccess={refreshProgress} />}
 
       <div className="space-y-6">
+        {/* Today's AI Recommendation Hero Card */}
+        {aiRecs && aiRecs.recommendations && aiRecs.recommendations.length > 0 && (
+          <div 
+            className="rounded-3xl p-6 border border-indigo-100 shadow-sm relative overflow-hidden"
+            style={{
+              background: "linear-gradient(135deg, #4F46E5 0%, #312E81 100%)",
+            }}
+          >
+            {/* Background elements */}
+            <div className="absolute top-[-20%] right-[-10%] w-64 h-64 rounded-full bg-indigo-400/20 blur-3xl" />
+            <div className="absolute bottom-[-25%] left-[5%] w-72 h-72 rounded-full bg-violet-500/10 blur-3xl" />
+
+            <div className="relative z-10 text-white">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles size={18} className="text-indigo-200 animate-pulse" />
+                <span className="text-xs uppercase tracking-widest font-bold text-indigo-200">Today's AI Recommendation</span>
+              </div>
+
+              <h3 className="text-lg font-semibold mb-1">Optimize your Corporate Placement Readiness</h3>
+              <p className="text-xs text-indigo-200 mb-6">Based on your dynamic CGPA, resume checks, active project count, and target company criteria.</p>
+
+              <div className="grid gap-4 md:grid-cols-3 mb-6">
+                {aiRecs.recommendations.map((rec: any, idx: number) => (
+                  <div 
+                    key={idx} 
+                    className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h4 className="font-semibold text-sm text-white">{rec.title}</h4>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold shrink-0">
+                          +{rec.impact}%
+                        </span>
+                      </div>
+                      <p className="text-xs text-indigo-100/90 leading-relaxed">{rec.explanation}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-white/10 pt-4 gap-3 text-xs text-indigo-200">
+                <div className="flex items-center gap-4">
+                  <div>
+                    <span>Current Readiness:</span>
+                    <strong className="text-white ml-1.5 text-sm">{aiRecs.currentReadiness}%</strong>
+                  </div>
+                  <div className="w-px h-3 bg-white/20" />
+                  <div>
+                    <span>Est. Readiness After Completion:</span>
+                    <strong className="text-emerald-300 ml-1.5 text-sm">{aiRecs.predictedAfterCompletion}%</strong>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => onNavigate?.("placement-student")}
+                  className="px-4 py-2 bg-white text-indigo-950 font-bold rounded-xl hover:bg-indigo-50 transition shadow-sm self-start sm:self-auto text-xs"
+                >
+                  Review actions checklist
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid gap-4 sm:grid-cols-2">
           <Card>
             <div className="flex items-start justify-between gap-4">
