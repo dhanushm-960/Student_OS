@@ -18,6 +18,10 @@ function EditProfileModal({ profile, onClose, onSuccess }: EditProfileModalProps
   const [gpa, setGpa] = useState(profile.gpa || "");
   const [completedCredits, setCompletedCredits] = useState(profile.completedCredits || "");
   const [projects, setProjects] = useState(profile.projects || "");
+  const [careerGoal, setCareerGoal] = useState(profile.careerGoal || "");
+  const [skills, setSkills] = useState(Array.isArray(profile.skills) ? profile.skills.join(", ") : "");
+  const [studyPreferences, setStudyPreferences] = useState(profile.studyPreferences || "Visual / Project-oriented");
+  const [availableStudyHours, setAvailableStudyHours] = useState(profile.availableStudyHours || "4");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +44,10 @@ function EditProfileModal({ profile, onClose, onSuccess }: EditProfileModalProps
           completedCredits: Number(completedCredits),
           gpa: Number(gpa),
           projectsCompleted: Number(projects),
+          careerGoal,
+          skills: skills.split(",").map((s: string) => s.trim()).filter(Boolean),
+          studyPreferences,
+          availableStudyHours: Number(availableStudyHours)
         }),
       });
       onSuccess();
@@ -182,6 +190,54 @@ function EditProfileModal({ profile, onClose, onSuccess }: EditProfileModalProps
                 disabled={loading}
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-slate-300 block mb-1">Career Goal</label>
+              <input
+                type="text"
+                value={careerGoal}
+                onChange={(e) => setCareerGoal(e.target.value)}
+                placeholder="Software Engineer"
+                className="w-full px-3 py-2 rounded-xl border border-white/10 bg-slate-900/40 text-white text-sm focus:outline-none focus:border-indigo-500"
+                disabled={loading}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-300 block mb-1">Available Study Hours</label>
+              <input
+                type="number"
+                value={availableStudyHours}
+                onChange={(e) => setAvailableStudyHours(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-white/10 bg-slate-900/40 text-white text-sm focus:outline-none focus:border-indigo-500"
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-slate-300 block mb-1">Skills (comma-separated)</label>
+            <input
+              type="text"
+              value={skills}
+              onChange={(e) => setSkills(e.target.value)}
+              placeholder="React, Node.js, Python"
+              className="w-full px-3 py-2 rounded-xl border border-white/10 bg-slate-900/40 text-white text-sm focus:outline-none focus:border-indigo-500"
+              disabled={loading}
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-slate-300 block mb-1">Study Preferences</label>
+            <input
+              type="text"
+              value={studyPreferences}
+              onChange={(e) => setStudyPreferences(e.target.value)}
+              placeholder="e.g. Visual, Auditory, Coding labs"
+              className="w-full px-3 py-2 rounded-xl border border-white/10 bg-slate-900/40 text-white text-sm focus:outline-none focus:border-indigo-500"
+              disabled={loading}
+            />
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-white/5 mt-5">
@@ -369,6 +425,46 @@ export function ProfilePage() {
                 <span className="text-sm">Major</span>
               </div>
               <p className="mt-3 text-sm text-slate-900">{profile.major || "Unspecified (Click Edit Profile)"}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Career Details & Preferences card */}
+        <div className="rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-sm shadow-slate-950/5 space-y-4">
+          <div>
+            <p className="text-sm font-semibold text-slate-500">Career & Study Goals</p>
+            <p className="text-xs text-slate-400">Customized targets for AI planning recommendation weights.</p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-3xl bg-slate-50 p-5">
+              <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Target Career Goal</p>
+              <p className="text-sm font-semibold text-slate-800">{profile.careerGoal || "Software Engineer"}</p>
+            </div>
+
+            <div className="rounded-3xl bg-slate-50 p-5">
+              <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Daily Available Study Hours</p>
+              <p className="text-sm font-semibold text-slate-800">{profile.availableStudyHours || 4} hours / day</p>
+            </div>
+
+            <div className="rounded-3xl bg-slate-50 p-5">
+              <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Learning & Study Preference</p>
+              <p className="text-sm font-semibold text-slate-800">{profile.studyPreferences || "Visual / Project-oriented"}</p>
+            </div>
+
+            <div className="rounded-3xl bg-slate-50 p-5">
+              <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Verified Profile Skills</p>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {profile.skills && profile.skills.length > 0 ? (
+                  profile.skills.map((s: string) => (
+                    <span key={s} className="px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold">
+                      {s}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-xs text-slate-400">No skills set</span>
+                )}
+              </div>
             </div>
           </div>
         </div>

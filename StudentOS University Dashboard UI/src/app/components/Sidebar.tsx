@@ -8,13 +8,11 @@ import { useAuth } from "../context/AuthContext";
 
 const studentNavItems = [
   { id: "student-dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "courses", label: "Courses", icon: BookOpen },
-  { id: "assignments", label: "Assignments", icon: ClipboardList },
-  { id: "grades", label: "Grades", icon: GraduationCap },
   { id: "planner", label: "Planner", icon: Calendar },
-  { id: "ai-mentor", label: "AI Mentor", icon: Brain },
-  { id: "student-projects", label: "Projects", icon: FolderKanban },
   { id: "placement-student", label: "Placement", icon: Briefcase },
+  { id: "ai-mentor", label: "AI Mentor", icon: Brain },
+  { id: "profile", label: "Profile", icon: Users },
+  { id: "settings", label: "Settings", icon: ChevronRight },
 ];
 
 const adminNavItems = [

@@ -31,6 +31,11 @@ export function DashboardLayout({ allowedRole }: { allowedRole: "admin" | "stude
     return <Navigate to={targetDashboard} replace />;
   }
 
+  // Redirect to onboarding if student has not completed setup
+  if (profile.role === "student" && !profile.setupCompleted) {
+    return <Navigate to="/student/onboarding" replace />;
+  }
+
   // Map current location pathname to activePage, title, and subtitle
   const pathname = location.pathname;
   let activePage = "";
@@ -40,13 +45,10 @@ export function DashboardLayout({ allowedRole }: { allowedRole: "admin" | "stude
   if (allowedRole === "student") {
     if (pathname.endsWith("/student/dashboard")) { activePage = "student-dashboard"; title = "Student Dashboard"; subtitle = "Continue your academic flow"; }
     else if (pathname.endsWith("/student/profile")) { activePage = "profile"; title = "Profile"; subtitle = "Your personal and academic information"; }
-    else if (pathname.endsWith("/student/courses")) { activePage = "courses"; title = "Courses"; subtitle = "Enrolled courses, modules, and materials"; }
-    else if (pathname.endsWith("/student/assignments")) { activePage = "assignments"; title = "Assignments"; subtitle = "Pending and submitted tasks"; }
-    else if (pathname.endsWith("/student/grades")) { activePage = "grades"; title = "Grades"; subtitle = "Grades, GPA and transcripts"; }
     else if (pathname.endsWith("/student/planner")) { activePage = "planner"; title = "Planner"; subtitle = "Tasks, deadlines and calendar"; }
     else if (pathname.endsWith("/student/ai-mentor")) { activePage = "ai-mentor"; title = "AI Mentor"; subtitle = "Personalized guidance and study recommendations"; }
     else if (pathname.endsWith("/student/placement")) { activePage = "placement-student"; title = "Placement"; subtitle = "Apply, track applications and interviews"; }
-    else if (pathname.endsWith("/student/projects")) { activePage = "student-projects"; title = "Projects & Portfolio"; subtitle = "Manage capstones, teams, and portfolio work"; }
+    else if (pathname.endsWith("/student/settings")) { activePage = "settings"; title = "Settings"; subtitle = "Platform configuration and preferences"; }
   } else {
     if (pathname.endsWith("/admin/dashboard")) { activePage = "admin-dashboard"; title = "Admin Dashboard"; subtitle = "Institutional insights and operational controls"; }
     else if (pathname.endsWith("/admin/students")) { activePage = "students"; title = "Students"; subtitle = "Student directory and academic profiles"; }
@@ -70,13 +72,10 @@ export function DashboardLayout({ allowedRole }: { allowedRole: "admin" | "stude
     const studentRoutes: Record<string, string> = {
       "student-dashboard": "/student/dashboard",
       "profile": "/student/profile",
-      "courses": "/student/courses",
-      "assignments": "/student/assignments",
-      "grades": "/student/grades",
       "planner": "/student/planner",
       "ai-mentor": "/student/ai-mentor",
-      "student-projects": "/student/projects",
       "placement-student": "/student/placement",
+      "settings": "/student/settings",
     };
 
     const adminRoutes: Record<string, string> = {

@@ -32,34 +32,31 @@ export const registerUser = async (req, res, next) => {
 
     if (user) {
       if (user.role === "student") {
-        const depts = ["CSE", "IT", "Electronics", "Mechanical", "Civil"];
-        const department = depts[Math.floor(Math.random() * depts.length)];
         const uniqueNumber = Math.floor(100 + Math.random() * 900);
-        const rollNumber = `${department}22${uniqueNumber}`;
+        const rollNumber = `STU22${uniqueNumber}`;
 
         await StudentProfile.create({
           user: user._id,
           rollNumber,
-          department,
+          department: "CSE",
           year: 1,
-          gpa: parseFloat((7.0 + Math.random() * 2.5).toFixed(2)),
-          attendance: Math.floor(75 + Math.random() * 22),
-          dsaProgress: Math.floor(30 + Math.random() * 40),
-          projectsCompleted: Math.floor(Math.random() * 3),
-          placementReadiness: Math.floor(30 + Math.random() * 40),
-          goalProgress: Math.floor(40 + Math.random() * 30),
+          gpa: 0,
+          attendance: 0,
+          dsaProgress: 0,
+          projectsCompleted: 0,
+          placementReadiness: 0,
+          goalProgress: 0,
           riskLevel: "Low",
           university: "Atria University",
-          degree: "B.Tech Computer Science",
-          phone: "+91 98765 43210",
-          location: "Bangalore, India",
-          major: "Artificial Intelligence",
-          completedCredits: 12,
+          degree: "",
+          phone: "",
+          location: "",
+          major: "",
+          completedCredits: 0,
           resumeVersion: "v1.0",
+          setupCompleted: false,
           aiRecommendations: [
-            "Complete your onboarding profile",
-            "Schedule a counseling session with your academic mentor",
-            "Update your skills and resume in the planner portal"
+            "Complete your onboarding profile"
           ]
         });
       }
@@ -72,6 +69,7 @@ export const registerUser = async (req, res, next) => {
           name: user.name,
           email: user.email,
           role: user.role,
+          setupCompleted: false,
         },
       });
     } else {
@@ -100,6 +98,10 @@ export const loginUser = async (req, res, next) => {
 
     // Verify credentials
     if (user && (await user.comparePassword(password))) {
+      const profile = user.role === "student"
+        ? await StudentProfile.findOne({ user: user._id })
+        : null;
+
       res.json({
         success: true,
         token: generateToken(user._id),
@@ -108,6 +110,7 @@ export const loginUser = async (req, res, next) => {
           name: user.name,
           role: user.role,
           email: user.email,
+          setupCompleted: profile ? profile.setupCompleted : false,
         },
       });
     } else {
@@ -129,6 +132,10 @@ export const getCurrentUser = async (req, res, next) => {
       throw new Error("User not found.");
     }
 
+    const profile = req.user.role === "student"
+      ? await StudentProfile.findOne({ user: req.user._id })
+      : null;
+
     res.json({
       success: true,
       user: {
@@ -136,6 +143,7 @@ export const getCurrentUser = async (req, res, next) => {
         name: req.user.name,
         email: req.user.email,
         role: req.user.role,
+        setupCompleted: profile ? profile.setupCompleted : false,
         createdAt: req.user.createdAt,
         updatedAt: req.user.updatedAt,
       },

@@ -795,103 +795,309 @@ function PlacementDashboard({ companyData, topRecruiters }: { companyData?: any[
     { label: "Placement Success Rate", value: "68%", trend: "+4%", up: true },
   ];
 
-  return (
-    <div className="mb-6">
-      <SectionTitle title="Placement Dashboard" subtitle="Recruitment activity and outcomes" />
-      <div className="grid grid-cols-4 gap-4 mb-4">
-        {pstats.map((s) => (
-          <Card key={s.label}>
-            <div
-              className="font-display font-700 mb-1"
-              style={{ fontSize: "1.5rem", color: "var(--foreground)", lineHeight: 1.1 }}
-            >
-              {s.value}
-            </div>
-            <div className="text-sm" style={{ color: "var(--foreground)" }}>
-              {s.label}
-            </div>
-            <span
-              className="inline-flex items-center gap-1 text-xs font-500 mt-2"
-              style={{ color: s.up ? "#059669" : "#F43F5E" }}
-            >
-              {s.up ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
-              {s.trend} this semester
-            </span>
-          </Card>
-        ))}
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <Card>
-          <div className="text-sm font-600 mb-4" style={{ color: "var(--foreground)" }}>
-            Company-wise Placement
-          </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={companyData} layout="vertical" margin={{ top: 0, right: 20, left: 10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(79,70,229,0.06)" horizontal={false} />
-              <XAxis type="number" tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
-              <YAxis
-                type="category"
-                dataKey="company"
-                tick={{ fontSize: 11, fill: "#9CA3AF" }}
-                axisLine={false}
-                tickLine={false}
-                width={60}
-              />
-              <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} />
-              <Bar dataKey="placed" name="Placed" radius={[0, 6, 6, 0]}>
-                {companyData.map((c, i) => (
-                  <Cell key={`company-cell-${i}`} fill={c.color || C.indigo} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
+  // Phase 5: Admin Predictive & Matching states
+  const [activeTab, setActiveTab] = useState<"overview" | "companies" | "predictions">("overview");
+  const [companiesList, setCompaniesList] = useState<any[]>([]);
+  const [predictionsList, setPredictionsList] = useState<any[]>([]);
+  const [predictionsStats, setPredictionsStats] = useState<any>({ highCount: 0, mediumCount: 0, lowCount: 0, averageReadiness: 0 });
+  const [loadingPhase5, setLoadingPhase5] = useState(false);
 
-        <Card>
-          <div className="text-sm font-600 mb-4" style={{ color: "var(--foreground)" }}>
-            Top Recruiters
-          </div>
-          <div className="space-y-3">
-            {topRecruiters.map((r) => (
-              <div key={r.name} className="flex items-center gap-3">
+  // Form states
+  const [compName, setCompName] = useState("");
+  const [compRole, setCompRole] = useState("");
+  const [compSalary, setCompSalary] = useState("₹8L");
+  const [compType, setCompType] = useState("Dream");
+  const [compMinGpa, setCompMinGpa] = useState("7.5");
+  const [compSkills, setCompSkills] = useState("React, Node.js");
+  const [compTech, setCompTech] = useState("Git, Docker");
+  const [compLogo, setCompLogo] = useState("🏢");
+  const [formSuccess, setFormSuccess] = useState(false);
+
+  const fetchPhase5AdminData = async () => {
+    try {
+      setLoadingPhase5(true);
+      const [compRes, predRes] = await Promise.all([
+        apiRequest("/api/admin/companies"),
+        apiRequest("/api/admin/placement-predictions")
+      ]);
+      if (compRes.success) setCompaniesList(compRes.companies);
+      if (predRes.success) {
+        setPredictionsList(predRes.predictions);
+        setPredictionsStats(predRes.stats);
+      }
+    } catch (err) {
+      console.error("Failed to load Phase 5 admin metrics:", err);
+    } finally {
+      setLoadingPhase5(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPhase5AdminData();
+  }, []);
+
+  const handleAddCompany = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!compName || !compRole) return;
+    try {
+      const res = await apiRequest("/api/admin/companies", {
+        method: "POST",
+        body: JSON.stringify({
+          name: compName,
+          role: compRole,
+          salary: compSalary,
+          type: compType,
+          minGpa: Number(compMinGpa),
+          requiredSkills: compSkills,
+          preferredTech: compTech,
+          logo: compLogo
+        })
+      });
+      if (res.success) {
+        setFormSuccess(true);
+        setCompName("");
+        setCompRole("");
+        await fetchPhase5AdminData();
+        setTimeout(() => setFormSuccess(false), 3000);
+      }
+    } catch (err) {
+      console.error("Failed to add company:", err);
+    }
+  };
+
+  return (
+    <div className="mb-6 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <SectionTitle title="Placement Dashboard" subtitle="Hiring metrics, Recruiter matching, & Placement predictive dashboard" />
+        <div className="flex bg-slate-100 rounded-xl p-0.5 self-start">
+          {["overview", "companies", "predictions"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab as any)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition ${
+                activeTab === tab ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {activeTab === "overview" && (
+        <>
+          <div className="grid grid-cols-4 gap-4">
+            {pstats.map((s) => (
+              <Card key={s.label}>
                 <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-700"
-                  style={{ background: `linear-gradient(135deg, ${C.indigo}, ${C.purple})` }}
+                  className="font-display font-700 mb-1"
+                  style={{ fontSize: "1.5rem", color: "var(--foreground)", lineHeight: 1.1 }}
                 >
-                  {r.logo}
+                  {s.value}
                 </div>
-                <div className="flex-1">
-                  <div className="text-sm font-500" style={{ color: "var(--foreground)" }}>
-                    {r.name}
-                  </div>
-                  <div className="text-xs" style={{ color: "var(--muted-foreground)" }}>
-                    {r.offers} offers · {r.salary} avg
-                  </div>
+                <div className="text-sm" style={{ color: "var(--foreground)" }}>
+                  {s.label}
                 </div>
                 <span
-                  className="text-xs px-2 py-0.5 rounded-full font-500"
-                  style={{
-                    background:
-                      r.type === "Dream"
-                         ? "#EEF2FF"
-                        : r.type === "Super Dream"
-                        ? "#F5F3FF"
-                        : "#F0FDF4",
-                    color:
-                      r.type === "Dream"
-                        ? C.indigo
-                        : r.type === "Super Dream"
-                        ? C.purple
-                        : C.green,
-                  }}
+                  className="inline-flex items-center gap-1 text-xs font-500 mt-2"
+                  style={{ color: s.up ? "#059669" : "#F43F5E" }}
                 >
-                  {r.type}
+                  {s.up ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
+                  {s.trend} this semester
                 </span>
-              </div>
+              </Card>
             ))}
           </div>
-        </Card>
-      </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Card>
+              <div className="text-sm font-600 mb-4" style={{ color: "var(--foreground)" }}>
+                Company-wise Placement
+              </div>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={companyData} layout="vertical" margin={{ top: 0, right: 20, left: 10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(79,70,229,0.06)" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
+                  <YAxis
+                    type="category"
+                    dataKey="company"
+                    tick={{ fontSize: 11, fill: "#9CA3AF" }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={60}
+                  />
+                  <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} />
+                  <Bar dataKey="placed" name="Placed" radius={[0, 6, 6, 0]}>
+                    {companyData.map((c, i) => (
+                      <Cell key={`company-cell-${i}`} fill={c.color || C.indigo} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+
+            <Card>
+              <div className="text-sm font-600 mb-4" style={{ color: "var(--foreground)" }}>
+                Top Recruiters
+              </div>
+              <div className="space-y-3">
+                {topRecruiters.map((r) => (
+                  <div key={r.name} className="flex items-center gap-3">
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-700"
+                      style={{ background: `linear-gradient(135deg, ${C.indigo}, ${C.purple})` }}
+                    >
+                      {r.logo}
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-500" style={{ color: "var(--foreground)" }}>
+                        {r.name}
+                      </div>
+                      <div className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                        {r.offers} offers · {r.salary} avg
+                      </div>
+                    </div>
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-full font-500"
+                      style={{
+                        background:
+                          r.type === "Dream"
+                             ? "#EEF2FF"
+                            : r.type === "Super Dream"
+                            ? "#F5F3FF"
+                            : "#F0FDF4",
+                        color:
+                          r.type === "Dream"
+                            ? C.indigo
+                            : r.type === "Super Dream"
+                            ? C.purple
+                            : C.green,
+                      }}
+                    >
+                      {r.type}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        </>
+      )}
+
+      {activeTab === "companies" && (
+        <div className="grid gap-6 md:grid-cols-[1.5fr_1fr]">
+          <Card>
+            <div className="text-sm font-bold text-slate-800 mb-4">Active Recruiter Requirements</div>
+            <div className="space-y-3">
+              {companiesList.map((c) => (
+                <div key={c._id} className="border border-slate-100 p-4 rounded-xl flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                      {c.logo}
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-slate-900">{c.name}</h4>
+                      <p className="text-xs text-slate-500">{c.role} · {c.salary} · Min GPA: {c.minGpa}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className={`text-[0.65rem] px-2 py-0.5 rounded-full font-bold ${
+                      c.type === "Super Dream" ? "bg-purple-100 text-purple-700" : "bg-indigo-100 text-indigo-700"
+                    }`}>
+                      {c.type}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card>
+            <div className="text-sm font-bold text-slate-800 mb-4">Add Hiring Requirements</div>
+            <form onSubmit={handleAddCompany} className="space-y-3">
+              <input type="text" placeholder="Company Name" value={compName} onChange={e => setCompName(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm" />
+              <input type="text" placeholder="Hiring Role" value={compRole} onChange={e => setCompRole(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm" />
+              <div className="grid grid-cols-2 gap-2">
+                <input type="text" placeholder="Salary Package" value={compSalary} onChange={e => setCompSalary(e.target.value)} className="px-3 py-2 border rounded-lg text-sm" />
+                <input type="text" placeholder="Logo initials (e.g. G)" value={compLogo} onChange={e => setCompLogo(e.target.value)} className="px-3 py-2 border rounded-lg text-sm" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <select value={compType} onChange={e => setCompType(e.target.value)} className="px-3 py-2 border rounded-lg text-sm bg-white">
+                  <option value="Dream">Dream</option>
+                  <option value="Super Dream">Super Dream</option>
+                  <option value="Mass Recruiter">Mass Recruiter</option>
+                </select>
+                <input type="number" step="0.1" placeholder="Min CGPA" value={compMinGpa} onChange={e => setCompMinGpa(e.target.value)} className="px-3 py-2 border rounded-lg text-sm" />
+              </div>
+              <input type="text" placeholder="Required Skills (comma separated)" value={compSkills} onChange={e => setCompSkills(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm" />
+              <input type="text" placeholder="Preferred Tech (comma separated)" value={compTech} onChange={e => setCompTech(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm" />
+              <button type="submit" className="w-full py-2 bg-indigo-600 text-white font-semibold rounded-lg text-sm hover:bg-indigo-700 transition">Save Company</button>
+              {formSuccess && <p className="text-xs text-emerald-600 text-center">Company requirements added successfully!</p>}
+            </form>
+          </Card>
+        </div>
+      )}
+
+      {activeTab === "predictions" && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-4 gap-4">
+            <Card>
+              <div className="text-xs font-semibold text-slate-400">Predicted High Potential</div>
+              <div className="text-xl font-bold mt-1 text-emerald-600">{predictionsStats.highCount} Students</div>
+            </Card>
+            <Card>
+              <div className="text-xs font-semibold text-slate-400">Predicted Medium Potential</div>
+              <div className="text-xl font-bold mt-1 text-indigo-600">{predictionsStats.mediumCount} Students</div>
+            </Card>
+            <Card>
+              <div className="text-xs font-semibold text-slate-400">Predicted Low Potential</div>
+              <div className="text-xl font-bold mt-1 text-rose-500">{predictionsStats.lowCount} Students</div>
+            </Card>
+            <Card>
+              <div className="text-xs font-semibold text-slate-400">Average Readiness Index</div>
+              <div className="text-xl font-bold mt-1 text-slate-900">{predictionsStats.averageReadiness}%</div>
+            </Card>
+          </div>
+
+          <Card>
+            <div className="text-sm font-bold text-slate-800 mb-4">Mock ML Predictive Analysis Run</div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-semibold">
+                    <th className="py-2.5">Student</th>
+                    <th>Dept</th>
+                    <th>CGPA</th>
+                    <th>Resume</th>
+                    <th>Readiness Score</th>
+                    <th>Prediction</th>
+                    <th>AI Intervention Recommendations</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {predictionsList.map((p) => (
+                    <tr key={p.studentId} className="hover:bg-slate-50/50">
+                      <td className="py-3 font-medium text-slate-900">{p.name}</td>
+                      <td>{p.dept}</td>
+                      <td>{p.gpa.toFixed(2)}</td>
+                      <td>{p.resumeScore}%</td>
+                      <td className="font-bold text-indigo-600">{p.readinessScore}%</td>
+                      <td>
+                        <span className={`px-2.5 py-0.5 rounded-full font-bold ${
+                          p.potential === "High" ? "bg-emerald-100 text-emerald-700" :
+                          p.potential === "Medium" ? "bg-indigo-100 text-indigo-700" : "bg-rose-100 text-rose-700"
+                        }`}>
+                          {p.potential}
+                        </span>
+                      </td>
+                      <td className="text-slate-500 max-w-sm truncate" title={p.recs.join(" | ")}>{p.recs[0] || "No critical interventions needed."}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

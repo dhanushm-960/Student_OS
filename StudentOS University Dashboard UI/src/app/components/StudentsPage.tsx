@@ -452,6 +452,68 @@ function StudentProfileModal({ student, onClose, onDelete }: { student: any; onC
           })}
         </div>
 
+        {/* Placement Readiness Breakdown */}
+        <div
+          className="mx-6 mb-4 p-4 rounded-xl"
+          style={{ background: "#F8F9FF", border: "1px solid rgba(79,70,229,0.08)" }}
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Target size={14} style={{ color: C.indigo }} />
+            <span className="text-xs font-600" style={{ color: C.indigo }}>
+              Placement Readiness Breakdown
+            </span>
+          </div>
+          <div className="space-y-2.5">
+            {[
+              { label: "Resume", value: displayStudent.placementBreakdown?.resume || 0, color: C.indigo },
+              { label: "Projects", value: displayStudent.placementBreakdown?.projects || 0, color: C.green },
+              { label: "DSA & Coding", value: displayStudent.placementBreakdown?.dsa || 0, color: C.purple },
+              { label: "Communication", value: displayStudent.placementBreakdown?.communication || 0, color: C.cyan },
+            ].map((item) => (
+              <div key={item.label}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>{item.label}</span>
+                  <span className="text-xs font-600" style={{ color: "var(--foreground)" }}>{item.value}%</span>
+                </div>
+                <div className="h-2 rounded-full" style={{ background: "#EEF2FF" }}>
+                  <div
+                    className="h-2 rounded-full transition-all"
+                    style={{ width: `${item.value}%`, background: `linear-gradient(90deg, ${item.color}, ${C.purple})` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Career & Skills */}
+        {(displayStudent.careerGoal || (displayStudent.skills && displayStudent.skills.length > 0)) && (
+          <div
+            className="mx-6 mb-4 p-4 rounded-xl"
+            style={{ background: "#ECFEFF", border: "1px solid rgba(6,182,212,0.15)" }}
+          >
+            {displayStudent.careerGoal && (
+              <div className="mb-2">
+                <span className="text-xs font-600" style={{ color: C.cyan }}>Career Goal: </span>
+                <span className="text-xs" style={{ color: "#0E7490" }}>{displayStudent.careerGoal}</span>
+              </div>
+            )}
+            {displayStudent.skills && displayStudent.skills.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {displayStudent.skills.map((skill: string, i: number) => (
+                  <span
+                    key={i}
+                    className="text-[0.65rem] px-2 py-0.5 rounded-full font-500"
+                    style={{ background: "rgba(6,182,212,0.1)", color: "#0E7490" }}
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* AI Recommendations */}
         <div
           className="mx-6 mb-6 p-4 rounded-xl"
