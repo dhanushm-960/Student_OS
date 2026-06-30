@@ -149,6 +149,8 @@ export const updateOwnProfile = async (req, res, next) => {
     if (careerGoal !== undefined) profile.careerGoal = careerGoal;
     if (linkedIn !== undefined) profile.linkedIn = linkedIn;
     if (github !== undefined) profile.github = github;
+    if (studyPreferences !== undefined) profile.studyPreferences = studyPreferences;
+    if (availableStudyHours !== undefined) profile.availableStudyHours = Number(availableStudyHours);
     if (setupCompleted !== undefined) profile.setupCompleted = !!setupCompleted;
     if (skills !== undefined) {
       if (Array.isArray(skills)) {

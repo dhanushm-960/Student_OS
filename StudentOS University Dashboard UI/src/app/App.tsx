@@ -31,13 +31,10 @@ function AppRoutes() {
     const studentRoutes: Record<string, string> = {
       "student-dashboard": "/student/dashboard",
       profile: "/student/profile",
-      courses: "/student/courses",
-      assignments: "/student/assignments",
-      grades: "/student/grades",
       planner: "/student/planner",
       "ai-mentor": "/student/ai-mentor",
-      "student-projects": "/student/projects",
       "placement-student": "/student/placement",
+      settings: "/student/settings",
     };
 
     const adminRoutes: Record<string, string> = {
@@ -71,13 +68,10 @@ function AppRoutes() {
       <Route element={<DashboardLayout allowedRole="student" />}>
         <Route path="/student/dashboard" element={<StudentDashboardPage onNavigate={handleNavigate} />} />
         <Route path="/student/profile" element={<ProfilePage />} />
-        <Route path="/student/courses" element={<CoursesPage />} />
-        <Route path="/student/assignments" element={<AssignmentsPage />} />
-        <Route path="/student/grades" element={<GradesPage />} />
         <Route path="/student/planner" element={<PlannerPage />} />
         <Route path="/student/ai-mentor" element={<AIMentorPage />} />
         <Route path="/student/placement" element={<PlacementPage />} />
-        <Route path="/student/projects" element={<StudentProjectsPage />} />
+        <Route path="/student/settings" element={<PlaceholderPage title="Settings" />} />
       </Route>
 
       {/* Admin Protected Routes */}

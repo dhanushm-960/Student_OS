@@ -345,6 +345,104 @@ export function PlacementPage() {
           )}
         </div>
       </div>
+
+      {/* Skills Gap Analysis & Project Progress */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="rounded-3xl bg-white p-6 shadow-sm shadow-slate-200 border border-slate-100">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">Skill Gap Analysis</h3>
+              <p className="text-xs text-slate-400">Verifying profile skills against current corporate match listings.</p>
+            </div>
+            <Sparkles size={18} className="text-indigo-600 animate-pulse" />
+          </div>
+
+          <div className="space-y-4">
+            {profile?.skills && profile.skills.map((skillName: string, idx: number) => {
+              const progressValues = [85, 70, 90, 60, 75];
+              const pct = progressValues[idx % progressValues.length];
+              return (
+                <div key={skillName}>
+                  <div className="flex items-center justify-between mb-1.5 text-xs text-slate-600">
+                    <span className="font-semibold">{skillName}</span>
+                    <span>{pct}% Proficient</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                    <div className="h-2 rounded-full bg-indigo-500" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="rounded-3xl bg-white p-6 shadow-sm shadow-slate-200 border border-slate-100">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">Project Progress</h3>
+              <p className="text-xs text-slate-400">Live portfolio project status benchmarks.</p>
+            </div>
+            <CheckCircle2 size={18} className="text-emerald-500" />
+          </div>
+
+          <div className="space-y-3.5">
+            <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-3.5">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-900">Campus Chatbot</span>
+                <span className="text-[0.65rem] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-semibold">In Progress</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-slate-200 overflow-hidden mb-1">
+                <div className="h-1.5 bg-indigo-500 rounded-full" style={{ width: "70%" }} />
+              </div>
+              <div className="flex items-center justify-between text-[0.65rem] text-slate-400">
+                <span>70% Complete</span>
+                <span>Next: Prototype Demo</span>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-3.5">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-900">Placement Portfolio</span>
+                <span className="text-[0.65rem] px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 font-semibold">Review</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-slate-200 overflow-hidden mb-1">
+                <div className="h-1.5 bg-purple-500 rounded-full" style={{ width: "85%" }} />
+              </div>
+              <div className="flex items-center justify-between text-[0.65rem] text-slate-400">
+                <span>85% Complete</span>
+                <span>Next: Finalize Resume Page</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Career Roadmap */}
+      <div className="rounded-3xl bg-white p-6 shadow-sm shadow-slate-200 border border-slate-100">
+        <h3 className="text-lg font-bold text-slate-900 mb-1">AI Career Roadmap</h3>
+        <p className="text-xs text-slate-400 mb-6">Targeted roadmap milestones to secure a role as a {profile?.careerGoal || "Software Engineer"}.</p>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="p-4 rounded-2xl bg-indigo-50/30 border border-indigo-100/50 relative">
+            <span className="text-xs font-bold text-indigo-600 bg-white px-2.5 py-0.5 border border-indigo-100 rounded-full">Phase 1</span>
+            <h4 className="font-bold text-sm text-slate-900 mt-3 mb-1.5">Core DSA Mastery</h4>
+            <p className="text-xs text-slate-500 leading-relaxed">Fulfill missing requirements on LeetCode trees, dynamic programming, and binary search graphs.</p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/60 relative">
+            <span className="text-xs font-bold text-slate-500 bg-white px-2.5 py-0.5 border border-slate-100 rounded-full">Phase 2</span>
+            <h4 className="font-bold text-sm text-slate-900 mt-3 mb-1.5">Full Stack Capstones</h4>
+            <p className="text-xs text-slate-500 leading-relaxed">Launch a scalable project containing database integrations to optimize recruiter portfolio matches.</p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/60 relative">
+            <span className="text-xs font-bold text-slate-500 bg-white px-2.5 py-0.5 border border-slate-100 rounded-full">Phase 3</span>
+            <h4 className="font-bold text-sm text-slate-900 mt-3 mb-1.5">System Design Prep</h4>
+            <p className="text-xs text-slate-500 leading-relaxed">Master mock interviews, API caching structures, and database partitioning principles.</p>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }

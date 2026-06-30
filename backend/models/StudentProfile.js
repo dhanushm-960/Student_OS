@@ -145,6 +145,14 @@ const studentProfileSchema = new mongoose.Schema(
       score: { type: Number, default: 50 },
       recs: { type: [String], default: [] },
       lastCalculated: { type: Date, default: Date.now }
+    },
+    studyPreferences: {
+      type: String,
+      default: "Visual / Project-oriented",
+    },
+    availableStudyHours: {
+      type: Number,
+      default: 4, // daily study hours
     }
   },
   {
