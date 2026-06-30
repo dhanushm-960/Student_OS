@@ -151,6 +151,7 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
   const [progressData, setProgressData] = useState<any>(null);
   const [aiRecs, setAiRecs] = useState<any>(null);
   const [plannerPlan, setPlannerPlan] = useState<any>(null);
+  const [recruiterMatches, setRecruiterMatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddAssignment, setShowAddAssignment] = useState(false);
@@ -158,7 +159,7 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
 
   const fetchData = async () => {
     try {
-      const [profileRes, progressRes, aiRes, plannerRes] = await Promise.all([
+      const [profileRes, progressRes, aiRes, plannerRes, matchesRes] = await Promise.all([
         apiRequest("/api/student/profile"),
         apiRequest("/api/student/progress"),
         apiRequest("/api/student/ai-recommendations").catch(err => {
@@ -167,6 +168,10 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
         }),
         apiRequest("/api/student/planner-data").catch(err => {
           console.error("Planner data call failed:", err);
+          return { success: false };
+        }),
+        apiRequest("/api/companies/matches").catch(err => {
+          console.error("Matches call failed:", err);
           return { success: false };
         })
       ]);
@@ -183,6 +188,9 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
       }
       if (plannerRes.success) {
         setPlannerPlan(plannerRes.planHistory);
+      }
+      if (matchesRes.success) {
+        setRecruiterMatches(matchesRes.matches || []);
       }
     } catch (err: any) {
       setError(err.message || "An error occurred while fetching data.");
@@ -208,15 +216,19 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
           placementBreakdown: placementRes.placementBreakdown,
         }));
       }
-      const [aiRes, plannerRes] = await Promise.all([
+      const [aiRes, plannerRes, matchesRes] = await Promise.all([
         apiRequest("/api/student/ai-recommendations").catch(() => null),
-        apiRequest("/api/student/planner-data").catch(() => null)
+        apiRequest("/api/student/planner-data").catch(() => null),
+        apiRequest("/api/companies/matches").catch(() => null)
       ]);
       if (aiRes && aiRes.success) {
         setAiRecs(aiRes);
       }
       if (plannerRes && plannerRes.success) {
         setPlannerPlan(plannerRes.planHistory);
+      }
+      if (matchesRes && matchesRes.success) {
+        setRecruiterMatches(matchesRes.matches || []);
       }
     } catch (err) {
       console.error("Failed to refresh progress:", err);
@@ -365,370 +377,246 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
       {showAddAssignment && <AddAssignmentModal onClose={() => setShowAddAssignment(false)} onSuccess={refreshProgress} />}
       {showAddGoal && <AddGoalModal onClose={() => setShowAddGoal(false)} onSuccess={refreshProgress} />}
 
+      {/* LEFT COLUMN: Hero Card & Today's Plan */}
       <div className="space-y-6">
-        {/* Today's AI Recommendation Hero Card */}
-        {aiRecs && aiRecs.recommendations && aiRecs.recommendations.length > 0 && (
-          <div 
-            className="rounded-3xl p-6 border border-indigo-100 shadow-sm relative overflow-hidden"
-            style={{
-              background: "linear-gradient(135deg, #4F46E5 0%, #312E81 100%)",
-            }}
-          >
-            {/* Background elements */}
-            <div className="absolute top-[-20%] right-[-10%] w-64 h-64 rounded-full bg-indigo-400/20 blur-3xl" />
-            <div className="absolute bottom-[-25%] left-[5%] w-72 h-72 rounded-full bg-violet-500/10 blur-3xl" />
+        
+        {/* 1. HERO CARD (Today's Focus Recommendation) */}
+        <div 
+          className="rounded-3xl p-6 border border-indigo-100 shadow-sm relative overflow-hidden text-white"
+          style={{
+            background: "linear-gradient(135deg, #4F46E5 0%, #312E81 100%)",
+          }}
+        >
+          {/* Decorative Blur Backgrounds */}
+          <div className="absolute top-[-20%] right-[-10%] w-64 h-64 rounded-full bg-indigo-400/20 blur-3xl" />
+          <div className="absolute bottom-[-25%] left-[5%] w-72 h-72 rounded-full bg-violet-500/10 blur-3xl" />
 
-            <div className="relative z-10 text-white">
-              <div className="flex items-center gap-2 mb-4">
-                <Sparkles size={18} className="text-indigo-200 animate-pulse" />
-                <span className="text-xs uppercase tracking-widest font-bold text-indigo-200">Today's AI Recommendation</span>
-              </div>
-
-              <h3 className="text-lg font-semibold mb-1">Optimize your Corporate Placement Readiness</h3>
-              <p className="text-xs text-indigo-200 mb-6">Based on your dynamic CGPA, resume checks, active project count, and target company criteria.</p>
-
-              <div className="grid gap-4 md:grid-cols-3 mb-6">
-                {aiRecs.recommendations.map((rec: any, idx: number) => (
-                  <div 
-                    key={idx} 
-                    className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <h4 className="font-semibold text-sm text-white">{rec.title}</h4>
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold shrink-0">
-                          +{rec.impact}%
-                        </span>
-                      </div>
-                      <p className="text-xs text-indigo-100/90 leading-relaxed">{rec.explanation}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-white/10 pt-4 gap-3 text-xs text-indigo-200">
-                <div className="flex items-center gap-4">
-                  <div>
-                    <span>Current Readiness:</span>
-                    <strong className="text-white ml-1.5 text-sm">{aiRecs.currentReadiness}%</strong>
-                  </div>
-                  <div className="w-px h-3 bg-white/20" />
-                  <div>
-                    <span>Est. Readiness After Completion:</span>
-                    <strong className="text-emerald-300 ml-1.5 text-sm">{aiRecs.predictedAfterCompletion}%</strong>
-                  </div>
+          <div className="relative z-10 flex flex-col justify-between min-h-[220px]">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Sparkles size={18} className="text-indigo-200 animate-pulse" />
+                  <span className="text-xs uppercase tracking-widest font-bold text-indigo-200">📌 Today's Focus</span>
                 </div>
-                <button 
-                  onClick={() => onNavigate?.("placement-student")}
-                  className="px-4 py-2 bg-white text-indigo-950 font-bold rounded-xl hover:bg-indigo-50 transition shadow-sm self-start sm:self-auto text-xs"
-                >
-                  Review actions checklist
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* AI Plan Update Card */}
-        {plannerPlan && (
-          <div className="rounded-3xl p-6 bg-slate-900 border border-indigo-950 text-slate-100 shadow-md relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-indigo-500/10 blur-2xl" />
-            <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles size={16} className="text-indigo-400" />
-                <span className="text-xs uppercase tracking-wider font-bold text-indigo-400">📌 AI Plan Update</span>
-              </div>
-              <p className="text-sm font-semibold text-slate-200 mb-4">{plannerPlan.reasoning}</p>
-              
-              <div className="space-y-2.5">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Today's Adapted Planner Workload:</p>
-                {plannerPlan.updatedPlan && plannerPlan.updatedPlan.map((planItem: any, index: number) => (
-                  <div key={index} className="flex items-center justify-between p-3 rounded-2xl bg-slate-950/50 border border-slate-800/80">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-indigo-400 bg-indigo-950 px-2 py-0.5 rounded-full">{index + 1}</span>
-                      <span className="text-xs font-medium text-slate-200">{planItem.title}</span>
-                    </div>
-                    <span className="text-[0.65rem] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
-                      {planItem.durationMinutes} mins
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Card>
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-slate-500">Welcome back, {profileData?.name || "Student"}</p>
-                <h2 className="mt-3 text-2xl font-semibold text-slate-900">Focus on your next milestone</h2>
-                <p className="mt-2 text-sm text-slate-500">
-                  {liveAssignments.length > 0
-                    ? `You have ${liveAssignments.filter((a: any) => a.status !== "Completed").length} pending task${liveAssignments.filter((a: any) => a.status !== "Completed").length !== 1 ? "s" : ""}. Let's keep the momentum going.`
-                    : "Add your first assignment to get started!"}
-                </p>
-              </div>
-              <div className="rounded-3xl bg-indigo-500/10 p-3 text-indigo-600">
-                <Sparkles size={32} />
-              </div>
-            </div>
-            <div className="mt-5 flex flex-wrap gap-3">
-              {[
-                { label: "CGPA", value: profileData?.gpa ? profileData.gpa.toFixed(2) : "0.0" },
-                { label: "Attendance", value: `${profileData?.attendance || 0}%` },
-                { label: "Completed Credits", value: `${profileData?.completedCredits || 0}` },
-              ].map((item) => (
-                <div key={item.label} className="rounded-3xl bg-slate-50 px-4 py-3 min-w-[110px]">
-                  <p className="text-[0.8rem] uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
-                  <p className="mt-1 text-lg font-semibold text-slate-900">{item.value}</p>
+                <div className="text-right">
+                  <span className="text-[0.65rem] text-indigo-200 block uppercase tracking-wider font-semibold">Placement Readiness</span>
+                  <span className="text-xl font-bold text-white">{readiness}%</span>
                 </div>
-              ))}
-            </div>
-          </Card>
+              </div>
 
-          <Card className="space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-slate-500">Placement readiness</p>
-                <h3 className="mt-2 text-3xl font-semibold text-slate-900">{readiness}%</h3>
-              </div>
-              <div className="rounded-3xl bg-slate-100 p-3 text-slate-700">
-                <Briefcase size={24} />
-              </div>
-            </div>
-            <div className="rounded-3xl bg-slate-100 p-4 space-y-3">
-              {[
-                { label: "Resume Score", value: profileData?.placementBreakdown?.resume || 0 },
-                { label: "DSA & Coding", value: profileData?.placementBreakdown?.dsa || 0 },
-                { label: "Projects Score", value: profileData?.placementBreakdown?.projects || 0 },
-                { label: "Communication", value: profileData?.placementBreakdown?.communication || 0 },
-              ].map((item) => (
-                <div key={item.label}>
-                  <div className="flex items-center justify-between mb-1.5 text-xs text-slate-500">
-                    <span>{item.label}</span>
-                    <span>{item.value}%</span>
+              {aiRecs && aiRecs.recommendations && aiRecs.recommendations.length > 0 ? (
+                <div className="space-y-3">
+                  <h3 className="text-2xl font-bold tracking-tight">
+                    {aiRecs.recommendations[0].title}
+                  </h3>
+                  <p className="text-sm text-indigo-100 max-w-xl leading-relaxed">
+                    {aiRecs.recommendations[0].explanation}
+                  </p>
+                  <div className="inline-flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full text-xs text-emerald-300 font-medium">
+                    <span>Est. Readiness Boost: +{aiRecs.recommendations[0].impact}%</span>
                   </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
-                    <div className="h-1.5 rounded-full bg-indigo-500" style={{ width: `${item.value}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-3xl bg-slate-50 p-4">
-                <p className="text-xs text-slate-400">Projects</p>
-                <p className="mt-2 text-xl font-semibold text-slate-900">{progressData?.projects?.length || 0}</p>
-              </div>
-              <div className="rounded-3xl bg-slate-50 p-4">
-                <p className="text-xs text-slate-400">Goals set</p>
-                <p className="mt-2 text-xl font-semibold text-slate-900">{progressData?.goals?.length || 0}</p>
-              </div>
-            </div>
-            <button onClick={() => onNavigate?.("placement-student")} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700">
-              <ArrowRight size={16} />
-              Review readiness checklist
-            </button>
-          </Card>
-        </div>
-
-        <div className="grid gap-4 xl:grid-cols-[1fr_0.9fr]">
-          <Card>
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-slate-500">Your tasks</p>
-                <h3 className="mt-2 text-xl font-semibold text-slate-900">
-                  {liveAssignments.length > 0 ? `${liveAssignments.filter((a: any) => a.status !== "Completed").length} pending` : "No tasks yet"}
-                </h3>
-              </div>
-              <button onClick={() => setShowAddAssignment(true)} className="rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-50 inline-flex items-center gap-1">
-                <Plus size={14} /> Add task
-              </button>
-            </div>
-            <div className="mt-5 space-y-3">
-              {liveAssignments.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-slate-200 p-6 text-center">
-                  <p className="text-sm text-slate-400">No assignments yet. Click "Add task" to create one!</p>
                 </div>
               ) : (
-                liveAssignments.slice(0, 5).map((task: any) => (
-                  <div key={task.id} className="flex flex-col gap-3 rounded-3xl border border-slate-200/80 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="font-semibold text-slate-900">{task.title}</p>
-                      <p className="text-sm text-slate-500">{task.course}</p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <select
-                        value={task.status}
-                        onChange={(e) => handleUpdateAssignmentStatus(task.id, e.target.value)}
-                        className={`rounded-full px-3 py-1 text-xs font-medium border cursor-pointer transition ${
-                          task.status === "Completed" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                          task.status === "In progress" ? "bg-sky-50 text-sky-700 border-sky-200" :
-                          "bg-white text-slate-600 border-slate-200"
-                        }`}
-                      >
-                        <option value="Not started">Not started</option>
-                        <option value="In progress">In progress</option>
-                        <option value="Completed">Completed</option>
-                      </select>
-                      <span className="text-sm text-slate-500">{task.due}</span>
-                      <button onClick={() => handleDeleteAssignment(task.id)} className="text-slate-300 hover:text-rose-500 transition">
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                ))
+                <div className="space-y-3">
+                  <h3 className="text-2xl font-bold tracking-tight">No urgent actions today!</h3>
+                  <p className="text-sm text-indigo-100">Your profile meets standard requirements. Review your matches checklist.</p>
+                </div>
               )}
             </div>
-          </Card>
 
-          <Card className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-white/10 pt-4 mt-6 gap-3">
+              <div className="text-xs text-indigo-200 flex items-center gap-4">
+                <div>
+                  <span>Target placement readiness:</span>
+                  <strong className="text-emerald-300 ml-1 text-sm">
+                    {aiRecs ? aiRecs.predictedAfterCompletion : readiness}%
+                  </strong>
+                </div>
+              </div>
+              <button 
+                onClick={() => onNavigate?.("placement-student")}
+                className="px-5 py-2.5 bg-white text-indigo-950 font-bold rounded-2xl hover:bg-indigo-50 transition shadow-sm text-xs self-start sm:self-auto"
+              >
+                Start Today's Plan
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. TODAY'S PLAN (Checklist of tasks) */}
+        <Card>
+          <div className="flex items-center justify-between gap-3 mb-5">
             <div>
-              <p className="text-sm font-semibold text-slate-500">Upcoming deadlines</p>
-              <h3 className="mt-2 text-xl font-semibold text-slate-900">
-                {deadlines.length > 0 ? `Next ${deadlines.length} item${deadlines.length !== 1 ? "s" : ""}` : "All clear!"}
+              <p className="text-sm font-semibold text-slate-500">Today's schedule</p>
+              <h3 className="text-xl font-semibold text-slate-900">
+                {liveAssignments.length > 0 ? `${liveAssignments.filter((a: any) => a.status !== "Completed").length} pending tasks` : "All clear!"}
               </h3>
             </div>
-            <div className="space-y-3">
-              {deadlines.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-slate-200 p-6 text-center">
-                  <p className="text-sm text-slate-400">No upcoming deadlines. Great job staying on top of things!</p>
-                </div>
-              ) : (
-                deadlines.map((item: any) => (
-                  <div key={item.label} className="rounded-3xl border border-slate-200 p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="font-semibold text-slate-900">{item.label}</p>
-                        <p className="text-sm text-slate-500">{item.type}</p>
-                      </div>
-                      <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">{item.date}</span>
-                    </div>
-                    <p className="mt-3 text-sm text-slate-500">Due by {item.time}</p>
-                  </div>
-                ))
-              )}
+            <div className="text-right">
+              <span className="text-xs text-slate-400 block font-medium">Total Workload</span>
+              <span className="text-sm font-bold text-slate-700">
+                {liveAssignments.length * 60} mins
+              </span>
             </div>
-          </Card>
-        </div>
+          </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card>
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-slate-500">Skill progress</p>
-                <h3 className="mt-2 text-xl font-semibold text-slate-900">Top skills</h3>
-              </div>
-              <Star size={20} className="text-amber-400" />
-            </div>
-            <div className="mt-5 space-y-4">
-              {studentSkills.map((skill: any) => (
-                <div key={skill.name}>
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <div>
-                      <p className="font-semibold text-slate-900">{skill.name}</p>
-                      <p className="text-sm text-slate-500">{skill.level}</p>
-                    </div>
-                    <p className="text-sm font-semibold text-slate-900">{skill.progress}%</p>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-slate-200">
-                    <div className={`h-2 rounded-full ${progressColor(skill.progress)}`} style={{ width: `${skill.progress}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card>
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-slate-500">Goal progress</p>
-                <h3 className="mt-2 text-xl font-semibold text-slate-900">Your goals</h3>
-              </div>
-              <div className="flex items-center gap-2">
-                <button onClick={() => setShowAddGoal(true)} className="rounded-full p-1 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 transition">
-                  <Plus size={18} />
+          <div className="space-y-3">
+            {liveAssignments.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-slate-200 p-8 text-center bg-slate-50/50">
+                <p className="text-sm text-slate-400">No scheduled tasks for today. Great job!</p>
+                <button 
+                  onClick={() => onNavigate?.("planner")}
+                  className="mt-3 text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 mx-auto"
+                >
+                  <Plus size={14} /> Schedule a task
                 </button>
-                <CheckCircle2 size={22} className="text-emerald-500" />
               </div>
-            </div>
-            <div className="mt-5 space-y-4">
-              {liveGoals.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-slate-200 p-6 text-center">
-                  <p className="text-sm text-slate-400">No goals set yet. Click + to add your first goal!</p>
-                </div>
-              ) : (
-                liveGoals.map((goal: any) => (
-                  <div key={goal.id}>
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-slate-900">{goal.title}</p>
-                        <span className="text-[0.65rem] rounded-full bg-indigo-50 px-2 py-0.5 text-indigo-600 font-medium">{goal.type}</span>
-                      </div>
-                      <p className="text-sm font-semibold text-slate-900">{goal.progress}%</p>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-slate-200">
-                      <div className={`h-2 rounded-full ${progressColor(goal.progress)}`} style={{ width: `${goal.progress}%` }} />
+            ) : (
+              liveAssignments.map((task: any) => (
+                <div 
+                  key={task.id} 
+                  className={`flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between transition ${
+                    task.status === "Completed" ? "bg-slate-50/50 border-slate-100" : "bg-white border-slate-200/80 shadow-sm"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <button 
+                      onClick={() => handleUpdateAssignmentStatus(task.id, task.status === "Completed" ? "Pending" : "Completed")}
+                      className={`w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 transition ${
+                        task.status === "Completed" ? "bg-indigo-600 border-indigo-600 text-white" : "border-slate-300 hover:border-indigo-400"
+                      }`}
+                    >
+                      {task.status === "Completed" && <CheckCircle size={14} />}
+                    </button>
+                    <div>
+                      <p className={`font-semibold text-sm ${task.status === "Completed" ? "line-through text-slate-400" : "text-slate-800"}`}>
+                        {task.title}
+                      </p>
+                      <p className="text-xs text-slate-400">{task.course} · 60 mins</p>
                     </div>
                   </div>
-                ))
-              )}
-            </div>
-          </Card>
-        </div>
+
+                  <div className="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 pt-2.5 sm:pt-0 border-slate-100">
+                    <select
+                      value={task.status}
+                      onChange={(e) => handleUpdateAssignmentStatus(task.id, e.target.value)}
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium border cursor-pointer transition ${
+                        task.status === "Completed" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                        task.status === "In progress" ? "bg-sky-50 text-sky-700 border-sky-200" :
+                        "bg-white text-slate-600 border-slate-200"
+                      }`}
+                    >
+                      <option value="Not started">Not started</option>
+                      <option value="In progress">In progress</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Missed">Missed</option>
+                    </select>
+                    <button 
+                      onClick={() => handleDeleteAssignment(task.id)}
+                      className="text-slate-300 hover:text-rose-500 transition"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
       </div>
 
-      <aside className="space-y-6">
-        <Card>
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-slate-500">AI Mentor</p>
-              <h3 className="mt-2 text-xl font-semibold text-slate-900">Need a study plan?</h3>
-            </div>
-            <Zap size={22} className="text-violet-500" />
+      {/* RIGHT COLUMN: Progress Overview, Recruiter Matches & AI Mentor */}
+      <div className="space-y-6">
+        
+        {/* 3. PROGRESS OVERVIEW */}
+        <Card className="space-y-4">
+          <div>
+            <h3 className="text-sm uppercase tracking-widest text-slate-400 font-bold">Progress Dashboard</h3>
+            <p className="text-xs text-slate-400">Consolidated analytics from database metrics.</p>
           </div>
-          <p className="mt-4 text-sm text-slate-500">Ask the AI Mentor for guidance on assignments, career prep, or skill growth.</p>
-          <div className="mt-5 grid gap-3">
-            {suggestions.map((item) => (
-              <button
-                key={item}
-                onClick={() => handleSuggestionClick(item)}
-                className="rounded-3xl border border-slate-200 px-4 py-3 text-left text-sm text-slate-700 transition hover:border-indigo-300 hover:bg-indigo-50"
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-          <button onClick={() => onNavigate?.("ai-mentor")} className="mt-5 inline-flex items-center justify-center gap-2 w-full rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700">
-            <MessageSquare size={16} />
-            Open AI Mentor
-          </button>
-        </Card>
-
-        <Card>
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-slate-500">Recent activity</p>
-              <h3 className="mt-2 text-xl font-semibold text-slate-900">What happened recently</h3>
-            </div>
-            <Activity size={22} className="text-slate-400" />
-          </div>
-          <div className="mt-5 space-y-3">
-            {activity.map((item, idx) => (
-              <div key={idx} className="rounded-3xl border border-slate-200/80 bg-slate-50 p-4">
-                <p className="font-medium text-slate-900">{item.label}</p>
-                <p className="text-sm text-slate-500">{item.detail}</p>
-                <p className="mt-2 text-xs uppercase tracking-[0.2em] text-slate-400">{item.time}</p>
+          
+          <div className="space-y-3.5">
+            {[
+              { label: "Placement Readiness", value: readiness },
+              { label: "Resume Score", value: profileData?.placementBreakdown?.resume || 0 },
+              { label: "Project Progress", value: Math.min(100, (progressData?.projects?.length || 0) * 33) },
+              { label: "Skills Progress", value: profileData?.skills?.length ? Math.min(100, profileData.skills.length * 15) : 0 },
+            ].map((item) => (
+              <div key={item.label}>
+                <div className="flex items-center justify-between mb-1 text-xs text-slate-500 font-semibold">
+                  <span>{item.label}</span>
+                  <span>{item.value}%</span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+                  <div className={`h-1.5 rounded-full ${progressColor(item.value)}`} style={{ width: `${item.value}%` }} />
+                </div>
               </div>
             ))}
           </div>
-          <button onClick={() => onNavigate?.("profile")} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700">
-            <ArrowRight size={14} />
-            See all activity
+
+          <div className="border-t border-slate-100 pt-4 flex items-center justify-between">
+            <span className="text-xs text-slate-400 font-semibold">Recruiter Matches:</span>
+            <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold">
+              {recruiterMatches.filter(c => c.eligible).length} Matches
+            </span>
+          </div>
+        </Card>
+
+        {/* 4. RECRUITER OPPORTUNITIES */}
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm uppercase tracking-widest text-slate-400 font-bold">Recruiter Drives</h3>
+              <p className="text-xs text-slate-400">Companies hiring for your profile.</p>
+            </div>
+            <button 
+              onClick={() => onNavigate?.("placement-student")}
+              className="text-xs font-semibold text-indigo-600 hover:text-indigo-700"
+            >
+              View All
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {recruiterMatches.slice(0, 3).map((match) => (
+              <div key={match.companyId} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100/50">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                    {match.logo}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900">{match.name}</h4>
+                    <p className="text-[0.65rem] text-slate-400">{match.role} · {match.salary}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-bold text-indigo-600">{match.matchScore}% Match</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* 5. AI MENTOR COMPACT CARD */}
+        <Card className="text-center p-6 space-y-3">
+          <div className="flex justify-center">
+            <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center text-violet-600">
+              <Sparkles size={20} />
+            </div>
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-slate-800">Ask AI Mentor</h3>
+            <p className="text-xs text-slate-400 mt-0.5">Need a dynamic study plan or interview tips?</p>
+          </div>
+          <button 
+            onClick={() => onNavigate?.("ai-mentor")}
+            className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl transition"
+          >
+            Ask AI Mentor
           </button>
         </Card>
-      </aside>
+
+      </div>
     </div>
   );
 }
