@@ -282,6 +282,15 @@ export const createAssignment = async (req, res, next) => {
       status: status || "Not started",
       priority: priority || "Medium",
     });
+
+    // Event Trigger: A new assignment is added
+    try {
+      const { runPlanningEngine } = await import("../utils/planningEngine.js");
+      await runPlanningEngine(req.user._id, "New assignment added");
+    } catch (peErr) {
+      console.error("Failed to run planning engine on assignment create:", peErr);
+    }
+
     res.status(201).json({ success: true, assignment });
   } catch (error) {
     next(error);
@@ -306,6 +315,17 @@ export const updateAssignment = async (req, res, next) => {
     if (status !== undefined) assignment.status = status;
     if (priority !== undefined) assignment.priority = priority;
     await assignment.save();
+
+    // Event Trigger: Assignment status changes
+    if (status !== undefined) {
+      try {
+        const { runPlanningEngine } = await import("../utils/planningEngine.js");
+        await runPlanningEngine(req.user._id, `Assignment status updated: ${status}`);
+      } catch (peErr) {
+        console.error("Failed to run planning engine on assignment update:", peErr);
+      }
+    }
+
     res.json({ success: true, assignment });
   } catch (error) {
     next(error);
@@ -322,6 +342,15 @@ export const deleteAssignment = async (req, res, next) => {
       res.status(404);
       throw new Error("Assignment not found.");
     }
+
+    // Event Trigger
+    try {
+      const { runPlanningEngine } = await import("../utils/planningEngine.js");
+      await runPlanningEngine(req.user._id, "Assignment deleted");
+    } catch (peErr) {
+      console.error("Failed to run planning engine on assignment delete:", peErr);
+    }
+
     res.json({ success: true, message: "Assignment deleted." });
   } catch (error) {
     next(error);
@@ -629,6 +658,14 @@ export const recalculatePlacement = async (req, res, next) => {
     }
 
     await profile.save();
+
+    // Event Trigger: Placement readiness changes
+    try {
+      const { runPlanningEngine } = await import("../utils/planningEngine.js");
+      await runPlanningEngine(userId, "Placement readiness changed");
+    } catch (peErr) {
+      console.error("Failed to run planning engine on placement recalculate:", peErr);
+    }
 
     res.json({
       success: true,

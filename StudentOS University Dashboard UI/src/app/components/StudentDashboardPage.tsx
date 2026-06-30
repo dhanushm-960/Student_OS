@@ -150,6 +150,7 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
   const [profileData, setProfileData] = useState<any>(null);
   const [progressData, setProgressData] = useState<any>(null);
   const [aiRecs, setAiRecs] = useState<any>(null);
+  const [plannerPlan, setPlannerPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddAssignment, setShowAddAssignment] = useState(false);
@@ -157,11 +158,15 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
 
   const fetchData = async () => {
     try {
-      const [profileRes, progressRes, aiRes] = await Promise.all([
+      const [profileRes, progressRes, aiRes, plannerRes] = await Promise.all([
         apiRequest("/api/student/profile"),
         apiRequest("/api/student/progress"),
         apiRequest("/api/student/ai-recommendations").catch(err => {
           console.error("AI recommendations call failed:", err);
+          return { success: false };
+        }),
+        apiRequest("/api/student/planner-data").catch(err => {
+          console.error("Planner data call failed:", err);
           return { success: false };
         })
       ]);
@@ -175,6 +180,9 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
       }
       if (aiRes.success) {
         setAiRecs(aiRes);
+      }
+      if (plannerRes.success) {
+        setPlannerPlan(plannerRes.planHistory);
       }
     } catch (err: any) {
       setError(err.message || "An error occurred while fetching data.");
@@ -200,9 +208,15 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
           placementBreakdown: placementRes.placementBreakdown,
         }));
       }
-      const aiRes = await apiRequest("/api/student/ai-recommendations").catch(() => null);
+      const [aiRes, plannerRes] = await Promise.all([
+        apiRequest("/api/student/ai-recommendations").catch(() => null),
+        apiRequest("/api/student/planner-data").catch(() => null)
+      ]);
       if (aiRes && aiRes.success) {
         setAiRecs(aiRes);
+      }
+      if (plannerRes && plannerRes.success) {
+        setPlannerPlan(plannerRes.planHistory);
       }
     } catch (err) {
       console.error("Failed to refresh progress:", err);
@@ -410,6 +424,35 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
                 >
                   Review actions checklist
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* AI Plan Update Card */}
+        {plannerPlan && (
+          <div className="rounded-3xl p-6 bg-slate-900 border border-indigo-950 text-slate-100 shadow-md relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-indigo-500/10 blur-2xl" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles size={16} className="text-indigo-400" />
+                <span className="text-xs uppercase tracking-wider font-bold text-indigo-400">📌 AI Plan Update</span>
+              </div>
+              <p className="text-sm font-semibold text-slate-200 mb-4">{plannerPlan.reasoning}</p>
+              
+              <div className="space-y-2.5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Today's Adapted Planner Workload:</p>
+                {plannerPlan.updatedPlan && plannerPlan.updatedPlan.map((planItem: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between p-3 rounded-2xl bg-slate-950/50 border border-slate-800/80">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-indigo-400 bg-indigo-950 px-2 py-0.5 rounded-full">{index + 1}</span>
+                      <span className="text-xs font-medium text-slate-200">{planItem.title}</span>
+                    </div>
+                    <span className="text-[0.65rem] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
+                      {planItem.durationMinutes} mins
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

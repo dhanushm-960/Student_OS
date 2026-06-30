@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import phase5Routes from "./routes/phase5Routes.js";
+import plannerRoutes from "./routes/plannerRoutes.js";
 
 // Load environment variables
 dotenv.config();
@@ -33,6 +34,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api", phase5Routes);
+app.use("/api/student", plannerRoutes);
 
 // 404 Route handler
 app.use((req, res, next) => {
