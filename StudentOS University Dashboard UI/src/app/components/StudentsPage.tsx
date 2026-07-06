@@ -570,6 +570,123 @@ function StudentProfileModal({ student, onClose, onDelete }: { student: any; onC
   );
 }
 
+/* ─── Send Notification Modal Component ─── */
+function SendNotificationModal({ student, onClose }: { student: any; onClose: () => void }) {
+  const [title, setTitle] = useState("");
+  const [type, setType] = useState("system");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) {
+      setError("Title is required.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      await apiRequest("/api/admin/notifications", {
+        method: "POST",
+        body: JSON.stringify({
+          studentId: student?.id || null, // null means broadcast
+          title: title.trim(),
+          type
+        })
+      });
+      setSuccess(true);
+      setTimeout(() => {
+        onClose();
+      }, 1200);
+    } catch (err: any) {
+      setError(err.message || "Failed to send notification.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div 
+        className="w-full max-w-md rounded-3xl border border-white/10 p-6 shadow-2xl text-slate-100"
+        style={{ background: "#0c0f1d" }}
+      >
+        <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
+          <h3 className="text-lg font-bold font-display text-white">
+            Send Notification to {student?.id ? student.name : "All Students"}
+          </h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">✕</button>
+        </div>
+
+        {error && (
+          <div className="p-3 mb-4 rounded-xl text-xs bg-rose-500/10 border border-rose-500/25 text-rose-400 text-center font-medium">
+            {error}
+          </div>
+        )}
+
+        {success ? (
+          <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-sm text-center font-medium my-6">
+            Notification sent successfully!
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-slate-300 block mb-1">Notification Text / Title</label>
+              <textarea
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Schedule for CS-301 midterms has been updated."
+                rows={3}
+                className="w-full px-3 py-2 rounded-xl border border-white/10 bg-slate-900/40 text-white text-sm focus:outline-none focus:border-indigo-500 transition resize-none"
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-300 block mb-1">Notification Category</label>
+              <select
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-white/10 bg-slate-900/40 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 transition"
+                disabled={loading}
+              >
+                <option value="system">System (General)</option>
+                <option value="academic">Academic (Grades, courses)</option>
+                <option value="placement">Placement (Interviews, matches)</option>
+                <option value="financial">Financial (Tuition, bills)</option>
+              </select>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-300 transition cursor-pointer"
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-lg cursor-pointer"
+                disabled={loading}
+              >
+                {loading ? "Sending..." : "Send Notification"}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main Students Directory Page ─── */
 export function StudentsPage() {
   const [search, setSearch] = useState("");
@@ -577,6 +694,7 @@ export function StudentsPage() {
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
   const [students, setStudents] = useState<any[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [notificationStudent, setNotificationStudent] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -642,6 +760,13 @@ export function StudentsPage() {
         />
       )}
 
+      {notificationStudent && (
+        <SendNotificationModal 
+          student={notificationStudent} 
+          onClose={() => setNotificationStudent(null)} 
+        />
+      )}
+
       {showAddModal && (
         <AddStudentModal 
           onClose={() => setShowAddModal(false)} 
@@ -703,6 +828,14 @@ export function StudentsPage() {
                 </button>
               ))}
             </div>
+            
+            <button
+              onClick={() => setNotificationStudent({ id: null, name: "All Students" })}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all shadow-md shadow-purple-600/10 cursor-pointer"
+              style={{ background: C.purple }}
+            >
+              Broadcast Notify
+            </button>
             
             <button
               onClick={() => setShowAddModal(true)}
@@ -842,6 +975,13 @@ export function StudentsPage() {
                           onClick={() => setSelectedStudent(s)}
                         >
                           View Profile
+                        </button>
+                        <button
+                          className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                          style={{ color: C.purple, background: "#F5F3FF" }}
+                          onClick={() => setNotificationStudent(s)}
+                        >
+                          Notify
                         </button>
                         <button
                           className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors text-rose-600 bg-rose-50 hover:bg-rose-100/70 cursor-pointer"

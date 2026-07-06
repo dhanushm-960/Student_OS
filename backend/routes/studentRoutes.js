@@ -8,12 +8,22 @@ import {
   createGoal, updateGoal, deleteGoal,
   recalculatePlacement,
 } from "../controllers/studentController.js";
+import {
+  getStudentNotifications,
+  toggleReadNotification,
+  markAllNotificationsRead
+} from "../controllers/notificationController.js";
 import protect from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // Apply auth middleware to all student routes
 router.use(protect);
+
+// Notifications
+router.get("/notifications", getStudentNotifications);
+router.post("/notifications/:id/toggle-read", toggleReadNotification);
+router.post("/notifications/read-all", markAllNotificationsRead);
 
 // Profile
 router.get("/profile", getOwnProfile);

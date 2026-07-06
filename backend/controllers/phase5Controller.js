@@ -4,6 +4,9 @@ import User from "../models/User.js";
 import Assignment from "../models/Assignment.js";
 import Project from "../models/Project.js";
 import Goal from "../models/Goal.js";
+import StudentTask from "../models/StudentTask.js";
+import { buildStudentContext } from "../utils/contextBuilder.js";
+import { generateRecommendation, chatWithMentor, generateWeeklySummary } from "../utils/aiService.js";
 
 // Helper: Simple deterministic placement predictor
 const predictPlacementForStudent = async (profile) => {
@@ -350,95 +353,55 @@ export const getPlacementPredictions = async (req, res, next) => {
 // @access  Private
 export const getAiRecommendations = async (req, res, next) => {
   try {
-    const profile = await StudentProfile.findOne({ user: req.user._id });
-    if (!profile) {
-      res.status(404);
-      throw new Error("Student profile not found.");
-    }
-
-    // Pull student indicators
-    const currentReadiness = profile.placementReadiness || 0;
-    const gpa = profile.gpa || 0;
-    const dsaProgress = profile.dsaProgress || 0;
-    const resumeScore = profile.resumeDetails?.score || 0;
-    const skills = profile.skills || [];
-    const careerGoal = profile.careerGoal || "Software Engineer";
-
-    const allRecommendations = [];
-
-    // Rule 1: Resume Score action
-    if (resumeScore < 85) {
-      const remainingResumeRoom = 85 - resumeScore;
-      // Resume score is 25% of overall placement score. So improvement in resume score boosts readiness by:
-      // readinessImprovement = (resumeScoreDiff) * 0.25
-      const boost = Math.max(1, Math.round(remainingResumeRoom * 0.25));
-      allRecommendations.push({
-        title: "Improve your Resume",
-        explanation: resumeScore === 0 
-          ? "No analyzed resume on file. Upload your PDF resume to correct structural mistakes and parse skills."
-          : "Add metrics, quantify achievements, and resolve action checklist items to optimize recruiter matching.",
-        impact: boost
-      });
-    }
-
-    // Rule 2: Projects completed action
-    const actualProjects = await Project.countDocuments({ student: req.user._id });
-    if (actualProjects < 3) {
-      // Adding a project adds ~25 points to projectsScore (which is 25% of overall readiness).
-      // So one extra project adds (25 * 0.25) = ~6-8%
-      const boost = 6 + (2 - actualProjects) * 2;
-      allRecommendations.push({
-        title: `Complete a portfolio Project`,
-        explanation: `Most recruiters hiring for '${careerGoal}' roles require hands-on experience. Build another full-stack app.`,
-        impact: boost
-      });
-    }
-
-    // Rule 3: DSA preparation
-    if (dsaProgress < 80) {
-      // DSA score is 30% of overall score. Raising dsaProgress to 85 adds to dsaScore.
-      const boost = Math.max(1, Math.round((85 - dsaProgress) * 0.3));
-      allRecommendations.push({
-        title: "Practice DSA this week",
-        explanation: "Enhance coding proficiency to pass coding assessments. Focus on arrays, hashing, and trees.",
-        impact: boost
-      });
-    }
-
-    // Rule 4: CGPA intervention
-    if (gpa < 8.0) {
-      // raising GPA is slow, but shows potential
-      allRecommendations.push({
-        title: "Enhance academic coursework grades",
-        explanation: "Some premium recruiters enforce strict cut-offs at 8.0+ CGPA. Work closely with teaching assistants.",
-        impact: 4
-      });
-    }
-
-    // Pick top 3 recommendations sorted by highest impact
-    const recommendations = allRecommendations
-      .sort((a, b) => b.impact - a.impact)
-      .slice(0, 3);
-
-    // Fallbacks if profile is perfect
-    if (recommendations.length < 3) {
-      if (!recommendations.some(r => r.title.includes("Mock Interview"))) {
-        recommendations.push({
-          title: "Schedule a Mock Interview",
-          explanation: "Maintain your edge by doing practice runs with career counselors or AI bots.",
-          impact: 3
-        });
-      }
-    }
-
-    const totalBoost = recommendations.reduce((acc, curr) => acc + curr.impact, 0);
-    const predictedAfterCompletion = Math.min(100, currentReadiness + totalBoost);
+    const context = await buildStudentContext(req.user._id);
+    const recsResult = await generateRecommendation(context);
 
     res.json({
       success: true,
-      currentReadiness,
-      predictedAfterCompletion,
-      recommendations
+      currentReadiness: context.studentProfile.placementReadiness,
+      predictedAfterCompletion: recsResult.predictedAfterCompletion,
+      recommendations: recsResult.recommendations
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    AI Mentor Context-Aware Chat
+// @route   POST /api/student/ai-mentor/chat
+// @access  Private
+export const aiMentorChat = async (req, res, next) => {
+  try {
+    const { message, history } = req.body;
+    if (!message) {
+      res.status(400);
+      throw new Error("Message is required.");
+    }
+
+    const context = await buildStudentContext(req.user._id);
+    const reply = await chatWithMentor(context, message, history || []);
+
+    res.json({
+      success: true,
+      reply
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+// @desc    Get dynamic AI weekly summary for the logged in student
+// @route   GET /api/student/weekly-summary
+// @access  Private
+export const getWeeklySummary = async (req, res, next) => {
+  try {
+    const context = await buildStudentContext(req.user._id);
+    const summaryResult = await generateWeeklySummary(context);
+
+    res.json({
+      success: true,
+      summary: summaryResult.summary,
+      idealWorkloadHours: summaryResult.idealWorkloadHours,
+      focusArea: summaryResult.focusArea
     });
   } catch (error) {
     next(error);

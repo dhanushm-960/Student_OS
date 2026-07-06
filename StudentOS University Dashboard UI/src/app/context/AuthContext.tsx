@@ -7,6 +7,7 @@ export interface UserProfile {
   name: string;
   email: string;
   role: 'student' | 'admin';
+  setupCompleted?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -62,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               name: data.user.name,
               email: data.user.email,
               role: data.user.role,
+              setupCompleted: data.user.setupCompleted,
               createdAt: data.user.createdAt,
               updatedAt: data.user.updatedAt
             };
@@ -109,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         name: data.user.name,
         email: data.user.email,
         role: data.user.role,
+        setupCompleted: data.user.setupCompleted,
         createdAt: data.user.createdAt,
         updatedAt: data.user.updatedAt
       };
@@ -148,6 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         name: data.user.name,
         email: data.user.email,
         role: data.user.role,
+        setupCompleted: data.user.setupCompleted,
         createdAt: data.user.createdAt,
         updatedAt: data.user.updatedAt
       };

@@ -80,6 +80,8 @@ export const updateOwnProfile = async (req, res, next) => {
     linkedIn,
     github,
     setupCompleted,
+    studyPreferences,
+    availableStudyHours,
   } = req.body;
 
   try {

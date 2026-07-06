@@ -8,7 +8,9 @@ import {
   getCompanies,
   addCompany,
   getPlacementPredictions,
-  getAiRecommendations
+  getAiRecommendations,
+  aiMentorChat,
+  getWeeklySummary
 } from "../controllers/phase5Controller.js";
 
 const router = express.Router();
@@ -18,6 +20,8 @@ const upload = multer({ limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB limit, 
 router.post("/resume/upload", protect, upload.single("resume"), uploadResume);
 router.get("/companies/matches", protect, getRecruiterMatches);
 router.get("/student/ai-recommendations", protect, getAiRecommendations);
+router.post("/student/ai-mentor/chat", protect, aiMentorChat);
+router.get("/student/weekly-summary", protect, getWeeklySummary);
 
 // Admin Routes
 router.get("/admin/companies", protect, admin, getCompanies);
