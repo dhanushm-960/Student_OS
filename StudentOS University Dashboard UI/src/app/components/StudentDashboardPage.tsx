@@ -538,9 +538,7 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
           <div className="space-y-3.5">
             {[
               { label: "Placement Readiness", value: readiness },
-              { label: "Resume Score", value: profileData?.placementBreakdown?.resume || 0 },
-              { label: "Project Progress", value: Math.min(100, (progressData?.projects?.length || 0) * 33) },
-              { label: "Skills Progress", value: profileData?.skills?.length ? Math.min(100, profileData.skills.length * 15) : 0 },
+              { label: "Resume Score", value: profileData?.resumeDetails?.score || 0 }
             ].map((item) => (
               <div key={item.label}>
                 <div className="flex items-center justify-between mb-1 text-xs text-slate-500 font-semibold">
@@ -562,40 +560,25 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
           </div>
         </Card>
 
-        {/* 4. RECRUITER OPPORTUNITIES */}
-        <Card className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm uppercase tracking-widest text-slate-400 font-bold">Recruiter Drives</h3>
-              <p className="text-xs text-slate-400">Companies hiring for your profile.</p>
+        {/* 4. CAREER INTELLIGENCE COMPACT CARD */}
+        <Card className="text-center p-6 space-y-3 border-emerald-100 bg-emerald-50/50">
+          <div className="flex justify-center">
+            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+              <Sparkles size={20} />
             </div>
-            <button 
-              onClick={() => onNavigate?.("placement-student")}
-              className="text-xs font-semibold text-indigo-600 hover:text-indigo-700"
-            >
-              View All
-            </button>
           </div>
-
-          <div className="space-y-3">
-            {recruiterMatches.slice(0, 3).map((match) => (
-              <div key={match.companyId} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100/50">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                    {match.logo}
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900">{match.name}</h4>
-                    <p className="text-[0.65rem] text-slate-400">{match.role} · {match.salary}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="text-xs font-bold text-indigo-600">{match.matchScore}% Match</span>
-                </div>
-              </div>
-            ))}
+          <div>
+            <h3 className="text-sm font-bold text-slate-800">Career Intelligence</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Analyze your resume and skill gaps</p>
           </div>
+          <button 
+            onClick={() => onNavigate?.("placement-student")}
+            className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl transition shadow-sm shadow-emerald-200"
+          >
+            Open Intelligence
+          </button>
         </Card>
+
 
         {/* 5. AI MENTOR COMPACT CARD */}
         <Card className="text-center p-6 space-y-3">

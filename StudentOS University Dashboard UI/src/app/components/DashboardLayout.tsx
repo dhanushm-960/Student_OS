@@ -47,7 +47,7 @@ export function DashboardLayout({ allowedRole }: { allowedRole: "admin" | "stude
     else if (pathname.endsWith("/student/profile")) { activePage = "profile"; title = "Profile"; subtitle = "Your personal and academic information"; }
     else if (pathname.endsWith("/student/planner")) { activePage = "planner"; title = "Planner"; subtitle = "Tasks, deadlines and calendar"; }
     else if (pathname.endsWith("/student/ai-mentor")) { activePage = "ai-mentor"; title = "AI Mentor"; subtitle = "Personalized guidance and study recommendations"; }
-    else if (pathname.endsWith("/student/placement")) { activePage = "placement-student"; title = "Placement"; subtitle = "Apply, track applications and interviews"; }
+    else if (pathname.endsWith("/student/career-intelligence")) { activePage = "placement-student"; title = "Career Intelligence"; subtitle = "Placement readiness and recruiter matches"; }
     else if (pathname.endsWith("/student/settings")) { activePage = "settings"; title = "Settings"; subtitle = "Platform configuration and preferences"; }
   } else {
     if (pathname.endsWith("/admin/dashboard")) { activePage = "admin-dashboard"; title = "Admin Dashboard"; subtitle = "Institutional insights and operational controls"; }
@@ -74,7 +74,7 @@ export function DashboardLayout({ allowedRole }: { allowedRole: "admin" | "stude
       "profile": "/student/profile",
       "planner": "/student/planner",
       "ai-mentor": "/student/ai-mentor",
-      "placement-student": "/student/placement",
+      "placement-student": "/student/career-intelligence",
       "settings": "/student/settings",
     };
 

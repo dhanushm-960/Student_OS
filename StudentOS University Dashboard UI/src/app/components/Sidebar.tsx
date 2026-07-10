@@ -9,7 +9,7 @@ import { useAuth } from "../context/AuthContext";
 const studentNavItems = [
   { id: "student-dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "planner", label: "Planner", icon: Calendar },
-  { id: "placement-student", label: "Placement", icon: Briefcase },
+  { id: "placement-student", label: "Career Intelligence", icon: Briefcase },
   { id: "ai-mentor", label: "AI Mentor", icon: Brain },
   { id: "profile", label: "Profile", icon: Users },
   { id: "settings", label: "Settings", icon: ChevronRight },

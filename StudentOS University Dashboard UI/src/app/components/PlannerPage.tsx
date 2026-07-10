@@ -348,7 +348,7 @@ export function PlannerPage() {
       )}
 
       {/* Main Grid View */}
-      <div className="grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
+      <div className="w-full">
         
         {/* Google Calendar Grid Layout */}
         <div className="rounded-3xl bg-white p-6 shadow-sm border border-slate-100 overflow-hidden">
@@ -410,7 +410,7 @@ export function PlannerPage() {
                       {hours.map((h, rowIdx) => (
                         <div 
                           key={rowIdx} 
-                          className="h-[60px] border-b border-slate-100/50 hover:bg-indigo-50/20 transition-colors cursor-crosshair"
+                          className="h-[60px] border-b border-slate-100/50 hover:bg-indigo-100/40 transition-colors duration-300 ease-out cursor-crosshair"
                           onClick={() => handleGridSlotClick(dayDate, h, colIdx)}
                           title={`Schedule task at ${h}:00`}
                         />
@@ -433,7 +433,7 @@ export function PlannerPage() {
                         return (
                           <div 
                             key={item.id || itemIdx}
-                            className={`absolute left-[2%] w-[96%] rounded-xl p-2 border ${colors.bg} ${colors.border} shadow-sm overflow-hidden flex flex-col justify-between group transition-all hover:shadow-md hover:scale-[1.01]`}
+                            className={`absolute left-[2%] w-[96%] rounded-xl p-2 border ${colors.bg} ${colors.border} shadow-sm overflow-hidden flex flex-col justify-between group transition-all duration-300 ease-out hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.02] z-10 hover:z-20`}
                             style={{ 
                               top: `${topOffset}px`, 
                               height: `${heightSize}px`,
@@ -442,7 +442,7 @@ export function PlannerPage() {
                           >
                             <div className="overflow-hidden">
                               <div className="flex items-center justify-between gap-1">
-                                <span className={`text-[9px] uppercase font-bold tracking-wider opacity-75 ${colors.text}`}>
+                                <span className={`truncate min-w-0 text-[9px] uppercase font-bold tracking-wider opacity-75 ${colors.text}`}>
                                   {item.category}
                                 </span>
                                 {item.isTask && (
@@ -553,68 +553,6 @@ export function PlannerPage() {
 
             </div>
           </div>
-        </div>
-
-        {/* Sidebar Tasks Checklist */}
-        <div className="space-y-6">
-          
-          {/* AI Plan reasoning */}
-          {history && (
-            <div className="rounded-3xl p-5 bg-indigo-950 text-indigo-100">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles size={16} className="text-indigo-400" />
-                <span className="text-xs uppercase tracking-wider font-bold text-indigo-400">Plan Analysis</span>
-              </div>
-              <p className="text-xs leading-relaxed text-indigo-200">{history.reasoning}</p>
-              <div className="mt-4 pt-3 border-t border-indigo-900 text-[0.7rem] text-indigo-400 flex items-center justify-between">
-                <span>Trigger Reason:</span>
-                <span className="font-medium text-white">{history.triggerEvent}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Checklist */}
-          <div className="rounded-3xl bg-white p-5 border border-slate-200">
-            <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-1.5">
-              <ListTodo size={16} className="text-indigo-600" />
-              Adaptable Action Checklist
-            </h3>
-            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-              {tasks.length === 0 ? (
-                <p className="text-xs text-slate-400 text-center py-4">No tasks found. Click "New Task" or any time slot to schedule.</p>
-              ) : (
-                tasks.map((task) => (
-                  <div key={task._id} className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2.5">
-                      <button 
-                        onClick={() => handleToggleTaskStatus(task._id, task.status)}
-                        className={`w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
-                          task.status === "Completed" ? "bg-indigo-600 border-indigo-600 text-white" : "border-slate-300 bg-white hover:border-indigo-400"
-                        }`}
-                      >
-                        {task.status === "Completed" && <Check size={12} />}
-                      </button>
-                      <div>
-                        <h4 className={`text-xs font-semibold ${task.status === "Completed" ? "line-through text-slate-400" : "text-slate-800"}`}>
-                          {task.title}
-                        </h4>
-                        <p className="text-[0.65rem] text-slate-400 mt-0.5">
-                          {task.category} · Priority: {task.priority}
-                        </p>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => handleDeleteTask(task._id)}
-                      className="text-slate-300 hover:text-rose-500 transition shrink-0 cursor-pointer"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
         </div>
 
       </div>

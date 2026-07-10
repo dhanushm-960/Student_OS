@@ -27,10 +27,9 @@ const callGemini = async (systemPrompt, userPrompt, history = []) => {
     });
 
     // Append latest prompt
-    const fullUserText = `${systemPrompt}\n\nUser Question/Input:\n${userPrompt}`;
     messages.push({
       role: "user",
-      parts: [{ text: fullUserText }]
+      parts: [{ text: userPrompt }]
     });
 
     console.log(`📡 [AI Service] Calling Google Gemini API with ${messages.length} content nodes...`);
@@ -42,10 +41,13 @@ const callGemini = async (systemPrompt, userPrompt, history = []) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
+        systemInstruction: {
+          parts: [{ text: systemPrompt }]
+        },
         contents: messages,
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 1000
+          maxOutputTokens: 2048
         }
       })
     });
@@ -103,7 +105,7 @@ const callOpenAI = async (systemPrompt, userPrompt, history = []) => {
         model: "gpt-4o-mini",
         messages,
         temperature: 0.7,
-        max_tokens: 1000
+        max_tokens: 2048
       })
     });
 
@@ -256,9 +258,9 @@ Do not write any other text or formatting. Just JSON.`;
 - Career Goal: ${profile.careerGoal}
 - Max Today Workload limit: 210 minutes
 - Learning Style: ${profile.studyPreferences}
-- Missed/Overdue Tasks: ${JSON.stringify(missedTasksList)}
-- Today's Pending Tasks: ${JSON.stringify(pendingTasksList)}
-- Upcoming Deadlines: ${JSON.stringify(studentContext.calendar?.assignments || [])}
+- Missed/Overdue Tasks: ${missedTasksList.map(t => `${t.title} (${t.estimatedDurationMinutes}m)`).join(", ") || "None"}
+- Today's Pending Tasks: ${pendingTasksList.map(t => `${t.title} (${t.estimatedDurationMinutes}m)`).join(", ") || "None"}
+- Upcoming Deadlines: ${(studentContext.calendar?.assignments || []).map(a => a.title).join(", ") || "None"}
 
 Create optimal schedule, determine which rescheduledTaskIds must wait, compile reasoning explanation and return the JSON.`;
 
@@ -356,12 +358,15 @@ Student Context:
 - Skills: ${profile.skills.join(", ")}
 
 Planner & Calendar:
-- Today's Tasks: ${JSON.stringify(studentContext.planner?.todayTasks || [])}
-- Missed Tasks: ${JSON.stringify(studentContext.planner?.missedTasks || [])}
-- Assignments: ${JSON.stringify(studentContext.calendar?.assignments || [])}
+- Today's Tasks: ${(studentContext.planner?.todayTasks || []).map(t => t.title).join(", ") || "None"}
+- Missed Tasks: ${(studentContext.planner?.missedTasks || []).map(t => t.title).join(", ") || "None"}
+- Assignments: ${(studentContext.calendar?.assignments || []).map(a => a.title).join(", ") || "None"}
 
-Recruiter Eligibility Matches:
-${(studentContext.recruiterData?.matches || []).map(c => `- ${c.name} (${c.role}): Eligible=${c.eligible}, Score=${c.matchScore}%`).join("\n")}
+Recruiter Eligibility Matches (Top 5):
+${(studentContext.recruiterData?.matches || []).filter(m => m.eligible).sort((a, b) => b.matchScore - a.matchScore).slice(0, 5).map(c => `- ${c.name} (${c.role}): Match Score=${c.matchScore}%`).join("\n")}
+
+Skills Gaps (Top 3 Ineligible):
+${(studentContext.recruiterData?.matches || []).filter(m => !m.eligible).sort((a, b) => b.matchScore - a.matchScore).slice(0, 3).map(c => `- Missing criteria for ${c.name}: ${c.missingSkills?.join(", ") || "GPA requirement not met"}`).join("\n")}
 
 Guidelines:
 1. Always address the student by their name (${profile.name}).
@@ -383,11 +388,103 @@ Guidelines:
     } else {
       replyText += `All tasks are complete! I recommend reviewing your matches or uploading a revised resume (current score is ${profile.resumeScore}%).`;
     }
-  } else if (lowerMsg.includes("match") || lowerMsg.includes("eligib") || lowerMsg.includes("company")) {
+  } else if (lowerMsg.includes("match") || lowerMsg.includes("eligib") || lowerMsg.includes("company") || lowerMsg.includes("placement")) {
     const count = (studentContext.recruiterData?.matches || []).filter(m => m.eligible).length;
     replyText += `You are currently eligible for **${count} matching companies** based on your CGPA of ${profile.gpa}. Update your resume checklist to unlock more recruiters.`;
+  } else if (lowerMsg.includes("skill") || lowerMsg.includes("interview") || lowerMsg.includes("resume")) {
+    const missing = [...new Set((studentContext.recruiterData?.matches || []).flatMap(m => m.missingSkills || []))];
+    const topMissing = missing.slice(0, 3);
+    if (topMissing.length > 0) {
+      replyText += `To improve your resume score (${profile.resumeScore}%), focus on acquiring these skills: **${topMissing.join(", ")}**. These are frequently requested by companies you're aiming for.`;
+    } else {
+      replyText += `Your current skills (${profile.skills.join(", ")}) are looking solid! Consider mock interviews to prep.`;
+    }
   } else {
     replyText += `I'm here to help you achieve your career goal of becoming a **${profile.careerGoal}**. What specific task or recruiter requirement can we look at next?`;
   }
   return replyText;
 };
+
+/**
+ * 5. Analyze Resume Content
+ */
+export const analyzeResume = async (resumeText) => {
+  const systemPrompt = `You are an expert AI Resume Analyzer for Career Intelligence.
+Extract information from the provided resume text and return ONLY a valid JSON object.
+IMPORTANT: First determine if the text provided is actually a resume. If it is NOT a resume (e.g. a random document, an essay, a syllabus, or gibberish), set "isResume" to false and leave the rest empty.
+
+Structure:
+{
+  "isResume": true or false,
+  "technicalSkills": ["skill1", "skill2"],
+  "softSkills": ["skill1"],
+  "programmingLanguages": ["lang1"],
+  "frameworks": ["framework1"],
+  "libraries": ["lib1"],
+  "tools": ["tool1"],
+  "databases": ["db1"],
+  "certifications": ["cert1"],
+  "education": "Brief summary of education",
+  "projects": ["Project 1 name/desc", "Project 2"],
+  "experience": ["Experience 1", "Experience 2"],
+  "github": "URL or empty",
+  "linkedin": "URL or empty"
+}
+Do not include any extra markdown formatting outside the JSON block.`;
+
+  const userPrompt = `Resume Text:\n${resumeText}`;
+
+  const rawText = await generateResponse(systemPrompt, userPrompt);
+  const parsed = parseJSON(rawText);
+  
+  if (parsed) return parsed;
+  
+  // Fallback
+  return {
+    isResume: true,
+    technicalSkills: ["React", "Node.js", "JavaScript"],
+    softSkills: ["Communication", "Teamwork"],
+    programmingLanguages: ["JavaScript", "Python"],
+    frameworks: ["Express"],
+    libraries: [],
+    tools: ["Git"],
+    databases: ["MongoDB"],
+    certifications: [],
+    education: "B.Tech Computer Science",
+    projects: ["E-commerce App", "Task Manager"],
+    experience: [],
+    github: "",
+    linkedin: ""
+  };
+};
+
+/**
+ * 6. Generate Action Checklist
+ */
+export const generateActionChecklist = async (resumeAnalysis, studentContext) => {
+  const systemPrompt = `You are a Career Coach AI. Generate a personalized resume improvement checklist.
+Return ONLY a valid JSON object:
+{
+  "checklist": ["Action 1", "Action 2", "Action 3"]
+}
+Limit to top 5-6 actionable items.`;
+
+  const userPrompt = `Student Goal: ${studentContext.studentProfile.careerGoal}
+Resume Analysis JSON:
+${JSON.stringify(resumeAnalysis)}
+
+Suggest actionable improvements (e.g. Add measurable achievements, add GitHub profile).`;
+
+  const rawText = await generateResponse(systemPrompt, userPrompt);
+  const parsed = parseJSON(rawText);
+  if (parsed && parsed.checklist) return parsed.checklist;
+
+  // Fallback
+  return [
+    "Add measurable achievements to projects",
+    "Include a link to your GitHub profile",
+    "List specific coursework relevant to your goal",
+    "Highlight soft skills like leadership"
+  ];
+};
+

@@ -132,13 +132,35 @@ const studentProfileSchema = new mongoose.Schema(
     },
     resumeDetails: {
       score: { type: Number, default: 0 },
+      strength: { type: String, default: "Needs Work" },
       skills: { type: [String], default: [] },
+      technicalSkills: { type: [String], default: [] },
+      softSkills: { type: [String], default: [] },
+      programmingLanguages: { type: [String], default: [] },
+      frameworks: { type: [String], default: [] },
+      libraries: { type: [String], default: [] },
+      tools: { type: [String], default: [] },
+      databases: { type: [String], default: [] },
+      certifications: { type: [String], default: [] },
       education: { type: String, default: "" },
       projects: { type: [String], default: [] },
-      technologies: { type: [String], default: [] },
+      experience: { type: [String], default: [] },
+      github: { type: String, default: "" },
+      linkedin: { type: String, default: "" },
       suggestions: { type: [String], default: [] },
+      actionChecklist: { type: [String], default: [] },
       fileName: { type: String, default: "" },
       uploadedAt: { type: Date }
+    },
+    skillGaps: {
+      missingSkills: [{
+        skill: String,
+        reason: String,
+        requiredBy: [String],
+        impact: Number
+      }],
+      prioritySkills: [String],
+      lastCalculated: { type: Date, default: Date.now }
     },
     placementPrediction: {
       potential: { type: String, enum: ["High", "Medium", "Low"], default: "Medium" },

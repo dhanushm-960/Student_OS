@@ -10,7 +10,8 @@ import {
   getPlacementPredictions,
   getAiRecommendations,
   aiMentorChat,
-  getWeeklySummary
+  getWeeklySummary,
+  getSkillGapAnalysis
 } from "../controllers/phase5Controller.js";
 
 const router = express.Router();
@@ -22,6 +23,7 @@ router.get("/companies/matches", protect, getRecruiterMatches);
 router.get("/student/ai-recommendations", protect, getAiRecommendations);
 router.post("/student/ai-mentor/chat", protect, aiMentorChat);
 router.get("/student/weekly-summary", protect, getWeeklySummary);
+router.get("/student/skill-gaps", protect, getSkillGapAnalysis);
 
 // Admin Routes
 router.get("/admin/companies", protect, admin, getCompanies);

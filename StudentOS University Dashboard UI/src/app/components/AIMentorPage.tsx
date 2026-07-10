@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Send, Sparkles, LifeBuoy, Star, MessageSquare, HelpCircle, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Send, Sparkles, LifeBuoy, Star, MessageSquare, HelpCircle, Loader2, ListTodo, Check, Trash2 } from "lucide-react";
 import { apiRequest } from "../utils/api";
 
 const suggestedPrompts = [
@@ -23,6 +23,59 @@ export function AIMentorPage() {
   const [messages, setMessages] = useState(initialMessages);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
+
+  const [history, setHistory] = useState<any>(null);
+  const [tasks, setTasks] = useState<any[]>([]);
+
+  const fetchPlannerData = async () => {
+    try {
+      const res = await apiRequest("/api/student/planner");
+      if (res.success) {
+        if (res.aiHistory && res.aiHistory.length > 0) {
+          setHistory(res.aiHistory[0]);
+        }
+        
+        const allTasks = [
+          ...(res.planner.todayTasks || []),
+          ...(res.planner.upcomingTasks || []),
+          ...(res.planner.missedTasks || []),
+          ...(res.planner.completedTasks || [])
+        ];
+        
+        allTasks.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+        setTasks(allTasks);
+      }
+    } catch (err: any) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchPlannerData();
+  }, []);
+
+  const handleToggleTaskStatus = async (taskId: string, currentStatus: string) => {
+    const newStatus = currentStatus === "Completed" ? "Pending" : "Completed";
+    try {
+      await apiRequest(`/api/student/tasks/${taskId}`, {
+        method: "PUT",
+        body: JSON.stringify({ status: newStatus })
+      });
+      fetchPlannerData();
+    } catch (err: any) {
+      console.error("Failed to update task", err);
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (!window.confirm("Delete this task?")) return;
+    try {
+      await apiRequest(`/api/student/tasks/${taskId}`, { method: "DELETE" });
+      fetchPlannerData();
+    } catch (err: any) {
+      console.error("Failed to delete task", err);
+    }
+  };
 
   async function handleSend(textToSend?: string) {
     const rawText = (textToSend || input).trim();
@@ -127,6 +180,23 @@ export function AIMentorPage() {
             ))}
           </div>
         </div>
+
+        {/* AI Plan reasoning */}
+        {history && (
+          <div className="rounded-3xl p-5 bg-indigo-950 text-indigo-100 shadow-sm shadow-slate-950/5">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles size={16} className="text-indigo-400" />
+              <span className="text-xs uppercase tracking-wider font-bold text-indigo-400">Plan Analysis</span>
+            </div>
+            <p className="text-xs leading-relaxed text-indigo-200">{history.reasoning}</p>
+            <div className="mt-4 pt-3 border-t border-indigo-900 text-[0.7rem] text-indigo-400 flex items-center justify-between">
+              <span>Trigger Reason:</span>
+              <span className="font-medium text-white">{history.triggerEvent}</span>
+            </div>
+          </div>
+        )}
+
+
       </div>
 
       <div className="space-y-6">

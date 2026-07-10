@@ -15,7 +15,7 @@ import { AssignmentsPage } from "./components/AssignmentsPage";
 import { GradesPage } from "./components/GradesPage";
 import { PlannerPage } from "./components/PlannerPage";
 import { AIMentorPage } from "./components/AIMentorPage";
-import { PlacementPage } from "./components/PlacementPage";
+import { CareerIntelligencePage } from "./components/CareerIntelligencePage";
 import { StudentProjectsPage } from "./components/StudentProjectsPage";
 import { StudentOnboardingPage } from "./components/StudentOnboardingPage";
 
@@ -33,7 +33,7 @@ function AppRoutes() {
       profile: "/student/profile",
       planner: "/student/planner",
       "ai-mentor": "/student/ai-mentor",
-      "placement-student": "/student/placement",
+      "placement-student": "/student/career-intelligence",
       settings: "/student/settings",
     };
 
@@ -70,7 +70,7 @@ function AppRoutes() {
         <Route path="/student/profile" element={<ProfilePage />} />
         <Route path="/student/planner" element={<PlannerPage />} />
         <Route path="/student/ai-mentor" element={<AIMentorPage />} />
-        <Route path="/student/placement" element={<PlacementPage />} />
+        <Route path="/student/career-intelligence" element={<CareerIntelligencePage />} />
         <Route path="/student/settings" element={<PlaceholderPage title="Settings" />} />
       </Route>
 

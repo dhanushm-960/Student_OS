@@ -180,13 +180,17 @@ export const buildStudentContext = async (userId) => {
       email: profile.user?.email || "",
       year: profile.year,
       department: profile.department,
+      degree: profile.degree || "B.Tech",
+      major: profile.major || profile.department || "Computer Science",
       careerGoal: profile.careerGoal || "Software Engineer",
       gpa: profile.gpa,
       skills: profile.skills || [],
       resumeScore: profile.resumeDetails?.score || 0,
       placementReadiness: profile.placementReadiness || 0,
       studyPreferences: profile.studyPreferences || "Visual / Project-oriented",
-      availableStudyHours: profile.availableStudyHours || 4
+      availableStudyHours: profile.availableStudyHours || 4,
+      resumeDetails: profile.resumeDetails || {},
+      skillGaps: profile.skillGaps || {}
     },
     projects: projects.map(p => ({
       id: p._id.toString(),
