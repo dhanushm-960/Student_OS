@@ -19,10 +19,7 @@ const adminNavItems = [
   { id: "admin-dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "students", label: "Students", icon: Users },
   { id: "reports", label: "Reports", icon: BarChart3 },
-  { id: "departments", label: "Departments", icon: Building2 },
-  { id: "academic", label: "Academic Analytics", icon: TrendingUp },
   { id: "placement", label: "Placement", icon: Briefcase },
-  { id: "projects", label: "Projects", icon: FolderKanban },
 ];
 
 interface SidebarProps {

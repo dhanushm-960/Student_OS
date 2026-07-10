@@ -100,16 +100,55 @@ export function CareerIntelligencePage() {
   return (
     <div className="space-y-6">
       {/* KPI Stats remain global at top */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-4">
         <div className="rounded-3xl bg-white p-6 shadow-sm shadow-slate-200 border border-slate-100">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Placement Readiness</p>
-              <h2 className="mt-2 text-3xl font-bold text-slate-900">{profile?.placementReadiness || 0}%</h2>
+              <h2 className="mt-2 text-3xl font-bold text-slate-900">{profile?.placement || 0}%</h2>
             </div>
             <TrendingUp size={20} className="text-indigo-600" />
           </div>
-          <p className="mt-4 text-xs text-slate-500">Based on Deterministic Scoring Engine.</p>
+          {(() => {
+            const score = profile?.placement || 0;
+            if (score >= 75) return (
+              <span className="mt-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" /> Placement Ready
+              </span>
+            );
+            if (score >= 50) return (
+              <span className="mt-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" /> Internship Ready
+              </span>
+            );
+            return (
+              <span className="mt-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-600 border border-rose-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block" /> Not Ready Yet
+              </span>
+            );
+          })()}
+        </div>
+
+        <div className="rounded-3xl bg-white p-6 shadow-sm shadow-slate-200 border border-slate-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold">Internship Readiness</p>
+              <h2 className="mt-2 text-3xl font-bold text-slate-900">{profile?.placement || 0}%</h2>
+            </div>
+            <Briefcase size={20} className="text-amber-500" />
+          </div>
+          {(() => {
+            const score = profile?.placement || 0;
+            const needed = Math.max(0, 50 - score);
+            if (score >= 50) return (
+              <span className="mt-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" /> Eligible for Internships
+              </span>
+            );
+            return (
+              <p className="mt-4 text-xs text-slate-500">Need <span className="font-semibold text-amber-600">{needed}% more</span> to qualify for internships.</p>
+            );
+          })()}
         </div>
 
         <div className="rounded-3xl bg-white p-6 shadow-sm shadow-slate-200 border border-slate-100">
@@ -136,6 +175,7 @@ export function CareerIntelligencePage() {
           <p className="mt-4 text-xs text-slate-500">Recruitment criteria match based on profile.</p>
         </div>
       </div>
+
 
       {error && (
         <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-sm flex items-center gap-2">

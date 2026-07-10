@@ -1,5 +1,6 @@
 import Notification from "../models/Notification.js";
 import User from "../models/User.js";
+import StudentProfile from "../models/StudentProfile.js";
 
 // Helper to format date as relative string
 function formatRelativeTime(date) {
@@ -104,17 +105,19 @@ export const createAdminNotification = async (req, res, next) => {
       throw new Error("Notification title is required.");
     }
 
-    // Verify student exists if specified
+    // Verify student profile exists and extract underlying user ID if specified
+    let targetUserId = null;
     if (studentId) {
-      const studentExists = await User.findById(studentId);
-      if (!studentExists) {
+      const studentProfile = await StudentProfile.findById(studentId);
+      if (!studentProfile) {
         res.status(404);
         throw new Error("Target student user not found.");
       }
+      targetUserId = studentProfile.user;
     }
 
     const notification = await Notification.create({
-      student: studentId || null, // null means broadcast to all
+      student: targetUserId, // null means broadcast to all
       title,
       type: type || "system",
       unread: true

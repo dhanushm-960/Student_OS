@@ -41,10 +41,7 @@ function AppRoutes() {
       "admin-dashboard": "/admin/dashboard",
       students: "/admin/students",
       reports: "/admin/reports",
-      departments: "/admin/departments",
-      academic: "/admin/academic",
       placement: "/admin/placement",
-      projects: "/admin/projects",
       settings: "/admin/settings",
     };
 
@@ -79,10 +76,7 @@ function AppRoutes() {
         <Route path="/admin/dashboard" element={<DashboardPage section="overview" onNavigate={handleNavigate} />} />
         <Route path="/admin/students" element={<StudentsPage />} />
         <Route path="/admin/reports" element={<ReportsPage />} />
-        <Route path="/admin/departments" element={<DashboardPage section="departments" onNavigate={handleNavigate} />} />
-        <Route path="/admin/academic" element={<DashboardPage section="academic" onNavigate={handleNavigate} />} />
         <Route path="/admin/placement" element={<DashboardPage section="placement" onNavigate={handleNavigate} />} />
-        <Route path="/admin/projects" element={<DashboardPage section="projects" onNavigate={handleNavigate} />} />
         <Route path="/admin/settings" element={<PlaceholderPage title="Settings" />} />
       </Route>
 

@@ -858,7 +858,7 @@ export function StudentsPage() {
           <table className="w-full">
             <thead>
               <tr style={{ background: "#F8F9FF" }}>
-                {["Student", "Roll No.", "Year", "CGPA", "Attendance", "DSA", "Placement Readiness", "Risk", "Actions"].map((h) => (
+                {["Student", "Roll No.", "Year", "CGPA", "Attendance", "Placement Readiness", "Risk", "Actions"].map((h) => (
                   <th
                     key={h}
                     className="px-4 py-3 text-left text-xs font-600 uppercase tracking-wide"
@@ -872,7 +872,7 @@ export function StudentsPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-sm text-slate-400">
+                  <td colSpan={8} className="px-4 py-8 text-center text-sm text-slate-400">
                     <div className="flex items-center justify-center gap-2">
                       <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-bounce" />
                       <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.2s]" />
@@ -883,7 +883,7 @@ export function StudentsPage() {
                 </tr>
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-sm text-slate-400">
+                  <td colSpan={8} className="px-4 py-8 text-center text-sm text-slate-400">
                     No student records found in the database.
                   </td>
                 </tr>
@@ -930,19 +930,7 @@ export function StudentsPage() {
                         {s.attendance}%
                       </span>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5">
-                        <div className="h-1.5 w-16 rounded-full" style={{ background: "#EEF2FF" }}>
-                          <div
-                            className="h-1.5 rounded-full"
-                            style={{ width: `${s.dsa}%`, background: C.purple }}
-                          />
-                        </div>
-                        <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
-                          {s.dsa}%
-                        </span>
-                      </div>
-                    </td>
+
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
                         <div className="h-1.5 w-16 rounded-full" style={{ background: "#EEF2FF" }}>

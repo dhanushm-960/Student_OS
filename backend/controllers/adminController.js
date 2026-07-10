@@ -89,7 +89,7 @@ export const getDashboardStats = async (req, res, next) => {
     ];
 
     // Placement Section
-    const placementReady = students.filter(s => s.placementReadiness >= 80).length;
+    const placementReady = students.filter(s => s.placementReadiness >= 75).length;
     const internshipReady = students.filter(s => s.placementReadiness >= 50).length;
     const resumeCompletion = students.filter(s => s.projectsCompleted >= 2).length;
 
