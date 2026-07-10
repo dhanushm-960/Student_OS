@@ -1,5 +1,6 @@
 import express from "express";
 import { getDashboardStats, getStudents, getStudentById, createStudent, deleteStudent } from "../controllers/adminController.js";
+import { createAdminNotification } from "../controllers/notificationController.js";
 import protect from "../middleware/authMiddleware.js";
 import admin from "../middleware/adminMiddleware.js";
 
@@ -14,5 +15,6 @@ router.get("/students", getStudents);
 router.post("/students", createStudent);
 router.get("/students/:id", getStudentById);
 router.delete("/students/:id", deleteStudent);
+router.post("/notifications", createAdminNotification);
 
 export default router;

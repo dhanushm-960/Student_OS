@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { GraduationCap, Phone, MapPin, Sparkles, FileText, CheckCircle2 } from "lucide-react";
+import { GraduationCap, Phone, MapPin, Sparkles, FileText, CheckCircle2, Briefcase, Link2 } from "lucide-react";
 import { useNavigate, Navigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import { apiRequest } from "../utils/api";
 
 export function StudentOnboardingPage() {
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, refreshUser } = useAuth();
   const navigate = useNavigate();
 
   // Form states
@@ -19,6 +19,11 @@ export function StudentOnboardingPage() {
   const [gpa, setGpa] = useState("");
   const [completedCredits, setCompletedCredits] = useState("");
   const [projects, setProjects] = useState("");
+
+  const [careerGoal, setCareerGoal] = useState("");
+  const [skills, setSkills] = useState("");
+  const [linkedIn, setLinkedIn] = useState("");
+  const [github, setGithub] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -61,6 +66,10 @@ export function StudentOnboardingPage() {
 
   if (!user || profile?.role !== "student") {
     return <Navigate to="/" replace />;
+  }
+
+  if (profile?.setupCompleted) {
+    return <Navigate to="/student/dashboard" replace />;
   }
 
   if (loading) {
@@ -111,9 +120,15 @@ export function StudentOnboardingPage() {
           completedCredits: parsedCredits,
           gpa: parsedGpa,
           projectsCompleted: parsedProjects,
+          careerGoal,
+          skills,
+          linkedIn,
+          github,
+          setupCompleted: true,
         }),
       });
 
+      await refreshUser();
       navigate("/student/dashboard");
     } catch (err: any) {
       setError(err.message || "Failed to save profile. Please check parameters.");
@@ -300,6 +315,69 @@ export function StudentOnboardingPage() {
                     required
                     placeholder="e.g. 2"
                     className="w-full px-3 py-2.5 rounded-xl border border-white/10 bg-slate-900/40 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-sm"
+                    disabled={saving}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Section 4: Professional & Social */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-indigo-400 border-b border-white/5 pb-1.5 flex items-center gap-2">
+                <Briefcase size={16} /> Professional & Social Info
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">Career Goal</label>
+                  <select
+                    value={careerGoal}
+                    onChange={(e) => setCareerGoal(e.target.value)}
+                    required
+                    className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-900/40 text-white focus:outline-none focus:border-indigo-500 text-sm"
+                    disabled={saving}
+                  >
+                    <option value="" disabled className="bg-slate-950 text-slate-400">Select Career Goal</option>
+                    <option value="Software Engineer" className="bg-slate-950">Software Engineer</option>
+                    <option value="AI Engineer" className="bg-slate-950">AI/ML Engineer</option>
+                    <option value="Data Scientist" className="bg-slate-950">Data Scientist</option>
+                    <option value="Product Manager" className="bg-slate-950">Product Manager</option>
+                    <option value="Consultant" className="bg-slate-950">Consultant</option>
+                    <option value="Other" className="bg-slate-950">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">Skills (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={skills}
+                    onChange={(e) => setSkills(e.target.value)}
+                    required
+                    placeholder="e.g. React, Node.js, Python"
+                    className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-900/40 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-sm"
+                    disabled={saving}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">LinkedIn Profile URL</label>
+                  <input
+                    type="url"
+                    value={linkedIn}
+                    onChange={(e) => setLinkedIn(e.target.value)}
+                    placeholder="https://linkedin.com/in/username"
+                    className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-900/40 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-sm"
+                    disabled={saving}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">GitHub Profile URL</label>
+                  <input
+                    type="url"
+                    value={github}
+                    onChange={(e) => setGithub(e.target.value)}
+                    placeholder="https://github.com/username"
+                    className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-900/40 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-sm"
                     disabled={saving}
                   />
                 </div>

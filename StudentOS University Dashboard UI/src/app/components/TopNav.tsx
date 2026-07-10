@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Bell, Search, Check, FileText, Briefcase, Database, AlertCircle } from "lucide-react";
+import { apiRequest } from "../utils/api";
 
 interface TopNavProps {
   pageTitle: string;
@@ -110,8 +111,23 @@ export function TopNav({ pageTitle, pageSubtitle, role = "student" }: TopNavProp
 
   // Initialize notifications based on role
   useEffect(() => {
-    setNotifications(role === "admin" ? adminNotifications : studentNotifications);
+    if (role === "student") {
+      fetchNotifications();
+    } else {
+      setNotifications(adminNotifications);
+    }
   }, [role]);
+
+  const fetchNotifications = async () => {
+    try {
+      const data = await apiRequest("/api/student/notifications");
+      if (data.success && data.notifications) {
+        setNotifications(data.notifications);
+      }
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+    }
+  };
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -126,14 +142,24 @@ export function TopNav({ pageTitle, pageSubtitle, role = "student" }: TopNavProp
 
   const unreadCount = notifications.filter((n) => n.unread).length;
 
-  const handleMarkAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
+  const handleMarkAllRead = async () => {
+    try {
+      await apiRequest("/api/student/notifications/read-all", { method: "POST" });
+      setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
+    } catch (err) {
+      console.error("Failed to mark all notifications read:", err);
+    }
   };
 
-  const handleToggleRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, unread: !n.unread } : n))
-    );
+  const handleToggleRead = async (id: string) => {
+    try {
+      await apiRequest(`/api/student/notifications/${id}/toggle-read`, { method: "POST" });
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, unread: !n.unread } : n))
+      );
+    } catch (err) {
+      console.error("Failed to toggle notification read status:", err);
+    }
   };
 
   return (

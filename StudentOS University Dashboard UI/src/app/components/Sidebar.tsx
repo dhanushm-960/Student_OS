@@ -8,23 +8,18 @@ import { useAuth } from "../context/AuthContext";
 
 const studentNavItems = [
   { id: "student-dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "courses", label: "Courses", icon: BookOpen },
-  { id: "assignments", label: "Assignments", icon: ClipboardList },
-  { id: "grades", label: "Grades", icon: GraduationCap },
   { id: "planner", label: "Planner", icon: Calendar },
+  { id: "placement-student", label: "Career Intelligence", icon: Briefcase },
   { id: "ai-mentor", label: "AI Mentor", icon: Brain },
-  { id: "student-projects", label: "Projects", icon: FolderKanban },
-  { id: "placement-student", label: "Placement", icon: Briefcase },
+  { id: "profile", label: "Profile", icon: Users },
+  { id: "settings", label: "Settings", icon: ChevronRight },
 ];
 
 const adminNavItems = [
   { id: "admin-dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "students", label: "Students", icon: Users },
   { id: "reports", label: "Reports", icon: BarChart3 },
-  { id: "departments", label: "Departments", icon: Building2 },
-  { id: "academic", label: "Academic Analytics", icon: TrendingUp },
   { id: "placement", label: "Placement", icon: Briefcase },
-  { id: "projects", label: "Projects", icon: FolderKanban },
 ];
 
 interface SidebarProps {

@@ -89,7 +89,7 @@ export const getDashboardStats = async (req, res, next) => {
     ];
 
     // Placement Section
-    const placementReady = students.filter(s => s.placementReadiness >= 80).length;
+    const placementReady = students.filter(s => s.placementReadiness >= 75).length;
     const internshipReady = students.filter(s => s.placementReadiness >= 50).length;
     const resumeCompletion = students.filter(s => s.projectsCompleted >= 2).length;
 
@@ -292,7 +292,7 @@ export const getStudents = async (req, res, next) => {
       name: s.user?.name || "Unknown",
       email: s.user?.email || "",
       roll: s.rollNumber,
-      dept: s.department === "Electronics" ? "Electronics" : s.department === "Mechanical" ? "Mechanical" : s.department, // Align UI names if needed
+      dept: s.department === "Electronics" ? "Electronics" : s.department === "Mechanical" ? "Mechanical" : s.department,
       year: s.year,
       gpa: s.gpa,
       attendance: s.attendance,
@@ -301,6 +301,11 @@ export const getStudents = async (req, res, next) => {
       placement: s.placementReadiness,
       goals: s.goalProgress,
       risk: s.riskLevel,
+      placementBreakdown: s.placementBreakdown || { resume: 0, projects: 0, dsa: 0, communication: 0 },
+      careerGoal: s.careerGoal || "",
+      skills: s.skills || [],
+      resumeDetails: s.resumeDetails || { score: 0, skills: [], education: "", projects: [], technologies: [], suggestions: [], fileName: "" },
+      placementPrediction: s.placementPrediction || { potential: "Medium", score: 50, recs: [] },
     }));
 
     res.json({
@@ -341,6 +346,13 @@ export const getStudentById = async (req, res, next) => {
         goals: student.goalProgress,
         risk: student.riskLevel,
         aiRecommendations: student.aiRecommendations,
+        placementBreakdown: student.placementBreakdown || { resume: 0, projects: 0, dsa: 0, communication: 0 },
+        careerGoal: student.careerGoal || "",
+        skills: student.skills || [],
+        linkedIn: student.linkedIn || "",
+        github: student.github || "",
+        resumeDetails: student.resumeDetails || { score: 0, skills: [], education: "", projects: [], technologies: [], suggestions: [], fileName: "" },
+        placementPrediction: student.placementPrediction || { potential: "Medium", score: 50, recs: [] },
       },
     });
   } catch (error) {

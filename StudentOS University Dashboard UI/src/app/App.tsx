@@ -15,7 +15,7 @@ import { AssignmentsPage } from "./components/AssignmentsPage";
 import { GradesPage } from "./components/GradesPage";
 import { PlannerPage } from "./components/PlannerPage";
 import { AIMentorPage } from "./components/AIMentorPage";
-import { PlacementPage } from "./components/PlacementPage";
+import { CareerIntelligencePage } from "./components/CareerIntelligencePage";
 import { StudentProjectsPage } from "./components/StudentProjectsPage";
 import { StudentOnboardingPage } from "./components/StudentOnboardingPage";
 
@@ -31,23 +31,17 @@ function AppRoutes() {
     const studentRoutes: Record<string, string> = {
       "student-dashboard": "/student/dashboard",
       profile: "/student/profile",
-      courses: "/student/courses",
-      assignments: "/student/assignments",
-      grades: "/student/grades",
       planner: "/student/planner",
       "ai-mentor": "/student/ai-mentor",
-      "student-projects": "/student/projects",
-      "placement-student": "/student/placement",
+      "placement-student": "/student/career-intelligence",
+      settings: "/student/settings",
     };
 
     const adminRoutes: Record<string, string> = {
       "admin-dashboard": "/admin/dashboard",
       students: "/admin/students",
       reports: "/admin/reports",
-      departments: "/admin/departments",
-      academic: "/admin/academic",
       placement: "/admin/placement",
-      projects: "/admin/projects",
       settings: "/admin/settings",
     };
 
@@ -71,13 +65,10 @@ function AppRoutes() {
       <Route element={<DashboardLayout allowedRole="student" />}>
         <Route path="/student/dashboard" element={<StudentDashboardPage onNavigate={handleNavigate} />} />
         <Route path="/student/profile" element={<ProfilePage />} />
-        <Route path="/student/courses" element={<CoursesPage />} />
-        <Route path="/student/assignments" element={<AssignmentsPage />} />
-        <Route path="/student/grades" element={<GradesPage />} />
         <Route path="/student/planner" element={<PlannerPage />} />
         <Route path="/student/ai-mentor" element={<AIMentorPage />} />
-        <Route path="/student/placement" element={<PlacementPage />} />
-        <Route path="/student/projects" element={<StudentProjectsPage />} />
+        <Route path="/student/career-intelligence" element={<CareerIntelligencePage />} />
+        <Route path="/student/settings" element={<PlaceholderPage title="Settings" />} />
       </Route>
 
       {/* Admin Protected Routes */}
@@ -85,10 +76,7 @@ function AppRoutes() {
         <Route path="/admin/dashboard" element={<DashboardPage section="overview" onNavigate={handleNavigate} />} />
         <Route path="/admin/students" element={<StudentsPage />} />
         <Route path="/admin/reports" element={<ReportsPage />} />
-        <Route path="/admin/departments" element={<DashboardPage section="departments" onNavigate={handleNavigate} />} />
-        <Route path="/admin/academic" element={<DashboardPage section="academic" onNavigate={handleNavigate} />} />
         <Route path="/admin/placement" element={<DashboardPage section="placement" onNavigate={handleNavigate} />} />
-        <Route path="/admin/projects" element={<DashboardPage section="projects" onNavigate={handleNavigate} />} />
         <Route path="/admin/settings" element={<PlaceholderPage title="Settings" />} />
       </Route>
 

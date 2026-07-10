@@ -7,6 +7,7 @@ export interface UserProfile {
   name: string;
   email: string;
   role: 'student' | 'admin';
+  setupCompleted?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -20,6 +21,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, name: string) => Promise<{ token: string; user: UserProfile }>;
   signOut: () => Promise<void>;
   clearError: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -61,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               name: data.user.name,
               email: data.user.email,
               role: data.user.role,
+              setupCompleted: data.user.setupCompleted,
               createdAt: data.user.createdAt,
               updatedAt: data.user.updatedAt
             };
@@ -108,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         name: data.user.name,
         email: data.user.email,
         role: data.user.role,
+        setupCompleted: data.user.setupCompleted,
         createdAt: data.user.createdAt,
         updatedAt: data.user.updatedAt
       };
@@ -147,6 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         name: data.user.name,
         email: data.user.email,
         role: data.user.role,
+        setupCompleted: data.user.setupCompleted,
         createdAt: data.user.createdAt,
         updatedAt: data.user.updatedAt
       };
@@ -163,6 +168,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const refreshUser = async () => {
+    const token = localStorage.getItem('studentos_token');
+    if (!token) return;
+    try {
+      const response = await fetch(`${API_URL}/api/auth/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await response.json();
+      if (response.ok && data.success && data.user) {
+        const mappedUser: UserProfile = {
+          id: data.user.id || data.user._id,
+          name: data.user.name,
+          email: data.user.email,
+          role: data.user.role,
+          setupCompleted: data.user.setupCompleted,
+          createdAt: data.user.createdAt,
+          updatedAt: data.user.updatedAt
+        };
+        setProfile(mappedUser);
+      }
+    } catch (err) {
+      console.error('refreshUser error:', err);
+    }
+  };
+
   const signOut = async () => {
     setError(null);
     localStorage.removeItem('studentos_token');
@@ -170,7 +204,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user: profile, profile, loading, error, signIn, signUp, signOut, clearError }}>
+    <AuthContext.Provider value={{ user: profile, profile, loading, error, signIn, signUp, signOut, clearError, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
