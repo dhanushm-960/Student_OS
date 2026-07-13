@@ -1,0 +1,252 @@
+[
+  {
+    "company": "Microsoft",
+    "role": "Software Engineer",
+    "location": "Bangalore",
+    "requiredSkills": ["React", "Node.js", "SQL", "Docker"],
+    "preferredSkills": ["Azure", "TypeScript"],
+    "experienceLevel": "Entry",
+    "salary": "18 LPA",
+    "postedDate": "Today"
+  },
+  {
+    "company": "Google",
+    "role": "Backend Developer",
+    "location": "Hyderabad",
+    "requiredSkills": ["Python", "Go", "SQL", "Kubernetes"],
+    "preferredSkills": ["GCP", "Microservices"],
+    "experienceLevel": "Mid",
+    "salary": "24 LPA",
+    "postedDate": "Yesterday"
+  },
+  {
+    "company": "Amazon",
+    "role": "SDE I",
+    "location": "Bangalore",
+    "requiredSkills": ["Java", "AWS", "SQL", "Spring Boot"],
+    "preferredSkills": ["Docker", "NoSQL"],
+    "experienceLevel": "Entry",
+    "salary": "16 LPA",
+    "postedDate": "Today"
+  },
+  {
+    "company": "Infosys",
+    "role": "System Engineer",
+    "location": "Pune",
+    "requiredSkills": ["Java", "SQL", "Python", "Git"],
+    "preferredSkills": ["Spring", "React"],
+    "experienceLevel": "Entry",
+    "salary": "4.5 LPA",
+    "postedDate": "2 Days Ago"
+  },
+  {
+    "company": "Deloitte",
+    "role": "Data Analyst",
+    "location": "Mumbai",
+    "requiredSkills": ["SQL", "Python", "Tableau", "Excel"],
+    "preferredSkills": ["PowerBI", "Machine Learning"],
+    "experienceLevel": "Entry",
+    "salary": "8 LPA",
+    "postedDate": "Today"
+  },
+  {
+    "company": "TCS",
+    "role": "Frontend Developer",
+    "location": "Chennai",
+    "requiredSkills": ["HTML", "CSS", "JavaScript", "React"],
+    "preferredSkills": ["Redux", "TypeScript"],
+    "experienceLevel": "Entry",
+    "salary": "7 LPA",
+    "postedDate": "Yesterday"
+  },
+  {
+    "company": "Wipro",
+    "role": "Full Stack Engineer",
+    "location": "Bangalore",
+    "requiredSkills": ["React", "Node.js", "MongoDB", "Express"],
+    "preferredSkills": ["AWS", "Docker"],
+    "experienceLevel": "Mid",
+    "salary": "12 LPA",
+    "postedDate": "Today"
+  },
+  {
+    "company": "Flipkart",
+    "role": "Backend Engineer",
+    "location": "Bangalore",
+    "requiredSkills": ["Java", "Spring Boot", "SQL", "Kafka"],
+    "preferredSkills": ["Redis", "ElasticSearch"],
+    "experienceLevel": "Mid",
+    "salary": "22 LPA",
+    "postedDate": "Today"
+  },
+  {
+    "company": "Microsoft",
+    "role": "Data Engineer",
+    "location": "Hyderabad",
+    "requiredSkills": ["SQL", "Python", "Spark", "Azure"],
+    "preferredSkills": ["Databricks", "Hadoop"],
+    "experienceLevel": "Mid",
+    "salary": "20 LPA",
+    "postedDate": "3 Days Ago"
+  },
+  {
+    "company": "IBM",
+    "role": "AI Engineer",
+    "location": "Bangalore",
+    "requiredSkills": ["Python", "TensorFlow", "PyTorch", "SQL"],
+    "preferredSkills": ["NLP", "Computer Vision"],
+    "experienceLevel": "Entry",
+    "salary": "14 LPA",
+    "postedDate": "Today"
+  },
+  {
+    "company": "Atlassian",
+    "role": "Software Engineer",
+    "location": "Remote",
+    "requiredSkills": ["React", "TypeScript", "Node.js", "GraphQL"],
+    "preferredSkills": ["AWS", "Testing"],
+    "experienceLevel": "Entry",
+    "salary": "25 LPA",
+    "postedDate": "Today"
+  },
+  {
+    "company": "Paytm",
+    "role": "SDE II",
+    "location": "Noida",
+    "requiredSkills": ["Java", "Spring Boot", "MySQL", "AWS"],
+    "preferredSkills": ["Microservices", "Docker"],
+    "experienceLevel": "Mid",
+    "salary": "18 LPA",
+    "postedDate": "Yesterday"
+  },
+  {
+    "company": "Swiggy",
+    "role": "Data Scientist",
+    "location": "Bangalore",
+    "requiredSkills": ["Python", "SQL", "Machine Learning", "Statistics"],
+    "preferredSkills": ["Deep Learning", "AWS"],
+    "experienceLevel": "Mid",
+    "salary": "24 LPA",
+    "postedDate": "Today"
+  },
+  {
+    "company": "Google",
+    "role": "Frontend Engineer",
+    "location": "Bangalore",
+    "requiredSkills": ["JavaScript", "React", "HTML", "CSS"],
+    "preferredSkills": ["Angular", "TypeScript"],
+    "experienceLevel": "Entry",
+    "salary": "20 LPA",
+    "postedDate": "Yesterday"
+  },
+  {
+    "company": "Cisco",
+    "role": "Network Software Engineer",
+    "location": "Bangalore",
+    "requiredSkills": ["C++", "Python", "Networking", "Linux"],
+    "preferredSkills": ["Docker", "Kubernetes"],
+    "experienceLevel": "Entry",
+    "salary": "15 LPA",
+    "postedDate": "2 Days Ago"
+  },
+  {
+    "company": "Amazon",
+    "role": "Cloud Support Associate",
+    "location": "Hyderabad",
+    "requiredSkills": ["Linux", "Networking", "AWS", "Python"],
+    "preferredSkills": ["Shell Scripting", "Troubleshooting"],
+    "experienceLevel": "Entry",
+    "salary": "10 LPA",
+    "postedDate": "Today"
+  },
+  {
+    "company": "Walmart",
+    "role": "Software Engineer II",
+    "location": "Bangalore",
+    "requiredSkills": ["Java", "Spring", "SQL", "React"],
+    "preferredSkills": ["Kafka", "Cassandra"],
+    "experienceLevel": "Mid",
+    "salary": "22 LPA",
+    "postedDate": "Yesterday"
+  },
+  {
+    "company": "Accenture",
+    "role": "Application Developer",
+    "location": "Pune",
+    "requiredSkills": ["Java", "SQL", "HTML", "JavaScript"],
+    "preferredSkills": ["Spring Boot", "Angular"],
+    "experienceLevel": "Entry",
+    "salary": "5.5 LPA",
+    "postedDate": "Today"
+  },
+  {
+    "company": "Morgan Stanley",
+    "role": "Technology Analyst",
+    "location": "Mumbai",
+    "requiredSkills": ["Java", "Python", "SQL", "Linux"],
+    "preferredSkills": ["C++", "Finance"],
+    "experienceLevel": "Entry",
+    "salary": "16 LPA",
+    "postedDate": "Yesterday"
+  },
+  {
+    "company": "Adobe",
+    "role": "Computer Scientist",
+    "location": "Noida",
+    "requiredSkills": ["C++", "Java", "Data Structures", "Algorithms"],
+    "preferredSkills": ["Machine Learning", "Python"],
+    "experienceLevel": "Entry",
+    "salary": "22 LPA",
+    "postedDate": "3 Days Ago"
+  },
+  {
+    "company": "Oracle",
+    "role": "Server Technology Engineer",
+    "location": "Bangalore",
+    "requiredSkills": ["C", "C++", "SQL", "Linux"],
+    "preferredSkills": ["Java", "Database Internals"],
+    "experienceLevel": "Mid",
+    "salary": "18 LPA",
+    "postedDate": "Today"
+  },
+  {
+    "company": "Uber",
+    "role": "Software Engineer",
+    "location": "Bangalore",
+    "requiredSkills": ["Go", "Java", "Node.js", "SQL"],
+    "preferredSkills": ["Microservices", "Kafka"],
+    "experienceLevel": "Entry",
+    "salary": "30 LPA",
+    "postedDate": "Today"
+  },
+  {
+    "company": "Salesforce",
+    "role": "MTS",
+    "location": "Hyderabad",
+    "requiredSkills": ["Java", "Apex", "SQL", "JavaScript"],
+    "preferredSkills": ["React", "AWS"],
+    "experienceLevel": "Entry",
+    "salary": "20 LPA",
+    "postedDate": "Yesterday"
+  },
+  {
+    "company": "Goldman Sachs",
+    "role": "Software Engineer",
+    "location": "Bangalore",
+    "requiredSkills": ["Java", "C++", "Python", "SQL"],
+    "preferredSkills": ["React", "Spring"],
+    "experienceLevel": "Entry",
+    "salary": "24 LPA",
+    "postedDate": "Today"
+  },
+  {
+    "company": "LinkedIn",
+    "role": "UI Engineer",
+    "location": "Bangalore",
+    "requiredSkills": ["JavaScript", "Ember", "React", "HTML", "CSS"],
+    "preferredSkills": ["Node.js", "TypeScript"],
+    "experienceLevel": "Mid",
+    "salary": "28 LPA",
+    "postedDate": "2 Days Ago"
+  }
+]
