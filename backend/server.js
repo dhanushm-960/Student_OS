@@ -7,12 +7,16 @@ import adminRoutes from "./routes/adminRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import phase5Routes from "./routes/phase5Routes.js";
 import plannerRoutes from "./routes/plannerRoutes.js";
+import { initMarketCron } from "./jobs/marketCron.js";
 
 // Load environment variables
 dotenv.config();
 
 // Connect to MongoDB
 connectDB();
+
+// Initialize Cron Jobs
+initMarketCron();
 
 const app = express();
 

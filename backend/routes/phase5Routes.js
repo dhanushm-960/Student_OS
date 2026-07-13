@@ -14,6 +14,9 @@ import {
   getSkillGapAnalysis
 } from "../controllers/phase5Controller.js";
 
+import { generateQuiz, submitQuiz } from "../controllers/quizController.js";
+import { getLiveMarket, getPersonalizedMarket, triggerMarketSync } from "../controllers/marketController.js";
+
 const router = express.Router();
 const upload = multer({ limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB limit, keep in memory
 
@@ -24,6 +27,13 @@ router.get("/student/ai-recommendations", protect, getAiRecommendations);
 router.post("/student/ai-mentor/chat", protect, aiMentorChat);
 router.get("/student/weekly-summary", protect, getWeeklySummary);
 router.get("/student/skill-gaps", protect, getSkillGapAnalysis);
+router.get("/student/quiz/generate", protect, generateQuiz);
+router.post("/student/quiz/submit", protect, submitQuiz);
+
+// Market Routes
+router.get("/market/live", protect, getLiveMarket);
+router.get("/market/personalized", protect, getPersonalizedMarket);
+router.post("/market/sync", protect, admin, triggerMarketSync);
 
 // Admin Routes
 router.get("/admin/companies", protect, admin, getCompanies);

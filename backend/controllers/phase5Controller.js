@@ -200,6 +200,14 @@ export const uploadResume = async (req, res, next) => {
     };
     profile.placementReadiness = prediction.score;
 
+    // Reset skill verification because they uploaded a new resume
+    if (profile.skillVerification) {
+      profile.skillVerification.verified = false;
+      profile.skillVerification.verifiedAt = null;
+    } else {
+      profile.skillVerification = { verified: false };
+    }
+
     await profile.save();
 
     res.json({

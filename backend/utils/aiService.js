@@ -488,3 +488,117 @@ Suggest actionable improvements (e.g. Add measurable achievements, add GitHub pr
   ];
 };
 
+/**
+ * 7. Generate Adaptive Skill Quiz
+ */
+export const generateSkillQuiz = async (skills) => {
+  const systemPrompt = `You are an expert Technical Assessor. Generate a rigorous multiple-choice quiz to verify the student's claimed skills.
+Generate exactly 3 questions per skill provided. 
+IMPORTANT RULES:
+1. Mix question types: For each skill, include 1 fundamental/basic question and 2 applied/scenario-based questions.
+2. UNIQUE OPTIONS: Do NOT reuse the same set of options across different questions. Every single question MUST have a completely unique set of 4 plausible, well-crafted options.
+3. Indicate the correct answer using correctOptionIndex (0 to 3).
+
+Return ONLY a valid JSON object matching this structure:
+{
+  "questions": [
+    {
+      "skill": "React",
+      "question": "You need to persist a value across renders without causing a re-render. Which hook should you use?",
+      "options": ["useState", "useEffect", "useRef", "useMemo"],
+      "correctOptionIndex": 2
+    }
+  ]
+}`;
+
+  const userPrompt = `Skills to verify: ${skills.join(", ")}`;
+
+  const rawText = await generateResponse(systemPrompt, userPrompt);
+  const parsed = parseJSON(rawText);
+  if (parsed && parsed.questions) return parsed;
+
+  // Fallback if API fails (e.g. quota exceeded)
+  const fallbackQuestions = [];
+  const commonQuestions = {
+    "React": [
+      { q: "You need to persist a value across renders without causing a re-render. Which hook should you use?", opts: ["useState", "useEffect", "useRef", "useMemo"], c: 2 },
+      { q: "What happens when you call setState in React?", opts: ["It immediately updates the state variable", "It schedules an update to a component's state object", "It forces a synchronous re-render", "It updates the DOM directly"], c: 1 },
+      { q: "How can you prevent a child component from re-rendering when its props haven't changed?", opts: ["React.memo", "useContext", "useReducer", "React.Fragment"], c: 0 }
+    ],
+    "Node.js": [
+      { q: "Which of the following describes Node.js's concurrency model?", opts: ["Multi-threaded blocking", "Single-threaded non-blocking event loop", "Multi-process synchronous", "Single-threaded blocking"], c: 1 },
+      { q: "How do you handle unhandled promise rejections in a Node.js server?", opts: ["process.on('unhandledRejection')", "try/catch around the server start", "window.onerror", "app.use(errorHandler)"], c: 0 },
+      { q: "What is the primary purpose of the 'Buffer' class in Node.js?", opts: ["Caching database queries", "Handling raw binary data", "Buffering HTTP requests to prevent DDOS", "Managing memory garbage collection"], c: 1 }
+    ],
+    "Python": [
+      { q: "What is the difference between a list and a tuple in Python?", opts: ["Lists are mutable, tuples are immutable", "Lists are immutable, tuples are mutable", "Lists can only hold strings", "Tuples are used only for math operations"], c: 0 },
+      { q: "You want to create a generator. What keyword must you use in your function?", opts: ["return", "yield", "generate", "async"], c: 1 },
+      { q: "What does the '__init__' method do in a Python class?", opts: ["It cleans up memory when the object is destroyed", "It acts as a constructor to initialize the object", "It starts the main execution loop", "It imports necessary modules for the class"], c: 1 }
+    ],
+    "JavaScript": [
+      { q: "What will 'console.log(typeof null)' output?", opts: ["null", "undefined", "object", "string"], c: 2 },
+      { q: "You need to execute multiple asynchronous operations concurrently and wait for all to finish. What should you use?", opts: ["Promise.race()", "awaiting them one by one", "Promise.all()", "setTimeout"], c: 2 },
+      { q: "What is closure in JavaScript?", opts: ["A function bundled together with its lexical environment", "A method to close a database connection", "A block of code that executes synchronously", "A way to hide HTML elements"], c: 0 }
+    ]
+  };
+
+  skills.forEach(skill => {
+    if (commonQuestions[skill]) {
+      commonQuestions[skill].forEach(item => {
+        fallbackQuestions.push({ skill, question: item.q, options: item.opts, correctOptionIndex: item.c });
+      });
+    } else {
+      // Generic fallback for unknown skills
+      fallbackQuestions.push({
+        skill,
+        question: `What is a fundamental principle of ${skill}?`,
+        options: ["Object-Oriented Design", "Core execution logic", "Memory allocation", "Standardization"],
+        correctOptionIndex: 1
+      });
+      fallbackQuestions.push({
+        skill,
+        question: `In a production environment, ${skill} is primarily used for:`,
+        options: ["Optimizing build processes", "Enhancing user interfaces", "Solving specific domain problems", "Managing server state"],
+        correctOptionIndex: 2
+      });
+      fallbackQuestions.push({
+        skill,
+        question: `Which scenario best requires the use of ${skill}?`,
+        options: ["When performance scaling is needed", "When styling is the priority", "When database schemas change", "When debugging network layers"],
+        correctOptionIndex: 0
+      });
+    }
+  });
+
+  return { questions: fallbackQuestions };
+};
+
+/**
+ * 8. Generate Market Insights
+ */
+export const generateMarketInsights = async (profile, missingSkills, summary) => {
+  if (!missingSkills || missingSkills.length === 0) {
+    return "Great job! Your skills are perfectly aligned with current market demands.";
+  }
+
+  const systemPrompt = `You are a Career Analyst AI. Based on the student's profile and the live market data, write a short, personalized 2-3 sentence insight explaining WHY learning their missing market skills will help them.
+Include specific company names from the market data if relevant. Keep it encouraging and analytical.`;
+
+  const topCompanies = summary.topCompanies.map(c => c.name).join(", ");
+  
+  const userPrompt = `Student Profile:
+- Current Skills: ${profile.skills.join(", ")}
+- Missing Market Skills: ${missingSkills.join(", ")}
+- Top Hiring Companies in Market: ${topCompanies}
+
+Generate the insight:`;
+
+  try {
+    const rawText = await generateResponse(systemPrompt, userPrompt);
+    return rawText.trim() || `Learning ${missingSkills[0]} could significantly improve your placement readiness, as it is highly demanded by top companies right now.`;
+  } catch (error) {
+    console.error("AI Market Insight Error:", error.message);
+    return `Learning ${missingSkills[0]} could significantly improve your placement readiness, as it is highly demanded by top companies right now.`;
+  }
+};
+

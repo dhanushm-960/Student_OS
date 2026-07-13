@@ -168,6 +168,23 @@ const studentProfileSchema = new mongoose.Schema(
       recs: { type: [String], default: [] },
       lastCalculated: { type: Date, default: Date.now }
     },
+    skillVerification: {
+      verified: { type: Boolean, default: false },
+      score: { type: Number, default: 0 },
+      skillsTested: { type: [String], default: [] },
+      attempts: { type: Number, default: 0 },
+      lastAttemptedAt: { type: Date },
+      verifiedAt: { type: Date }
+    },
+    currentQuizSession: {
+      questions: [{
+        skill: String,
+        question: String,
+        options: [String],
+        correctOptionIndex: Number
+      }],
+      generatedAt: { type: Date }
+    },
     studyPreferences: {
       type: String,
       default: "Visual / Project-oriented",
@@ -175,6 +192,25 @@ const studentProfileSchema = new mongoose.Schema(
     availableStudyHours: {
       type: Number,
       default: 4, // daily study hours
+    },
+    marketIntelligence: {
+      missingSkills: { type: [String], default: [] },
+      recommendation: { type: String, default: "" },
+      aiAlerts: [
+        {
+          message: String,
+          type: { type: String, enum: ["info", "success", "warning"], default: "info" },
+          date: { type: Date, default: Date.now }
+        }
+      ],
+      matchHistory: [
+        {
+          company: String,
+          score: Number,
+          date: { type: Date, default: Date.now }
+        }
+      ],
+      lastUpdated: { type: Date }
     }
   },
   {
