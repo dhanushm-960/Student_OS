@@ -22,9 +22,7 @@ export function StudentLoginPage() {
     if (!email) {
       e.email = "Email is required.";
     } else if (!emailRegex.test(email)) {
-      e.email = "Enter a valid college email.";
-    } else if (!email.endsWith("@atria.edu") && !email.endsWith("@atriauniversity.edu.in")) {
-      e.email = "Only @atria.edu or @atriauniversity.edu.in emails are allowed.";
+      e.email = "Enter a valid email address.";
     }
     if (!password) e.password = "Password is required.";
     else if (password.length < 6) e.password = "Password must be at least 6 characters.";
@@ -99,13 +97,13 @@ export function StudentLoginPage() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="text-xs font-semibold text-slate-300 block mb-1.5">College Email</label>
+              <label htmlFor="email" className="text-xs font-semibold text-slate-300 block mb-1.5">Email Address</label>
               <input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@university.edu"
+                placeholder="you@example.com"
                 className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-900/40 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition duration-200 text-sm"
                 aria-describedby={errors.email ? "email-error" : undefined}
                 disabled={loading}

@@ -1,5 +1,7 @@
 import StudentProfile from "../models/StudentProfile.js";
 import User from "../models/User.js";
+import mongoose from "mongoose";
+import SuggestedCompany from "../models/SuggestedCompany.js";
 
 // @desc    Get Admin Dashboard Stats
 // @route   GET /api/admin/dashboard-stats
@@ -472,6 +474,22 @@ export const deleteStudent = async (req, res, next) => {
     res.json({
       success: true,
       message: "Student and associated user account deleted successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get suggested companies from market validation
+// @route   GET /api/admin/suggested-companies
+// @access  Private/Admin
+export const getSuggestedCompanies = async (req, res, next) => {
+  try {
+    const suggestions = await SuggestedCompany.find({}).sort({ timesSuggested: -1 });
+
+    res.json({
+      success: true,
+      suggestions
     });
   } catch (error) {
     next(error);

@@ -159,13 +159,10 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
 
   const fetchData = async () => {
     try {
-      const [profileRes, progressRes, aiRes, plannerRes, matchesRes] = await Promise.all([
+      // 1. Fetch fast data
+      const [profileRes, progressRes, plannerRes, matchesRes] = await Promise.all([
         apiRequest("/api/student/profile"),
         apiRequest("/api/student/progress"),
-        apiRequest("/api/student/ai-recommendations").catch(err => {
-          console.error("AI recommendations call failed:", err);
-          return { success: false };
-        }),
         apiRequest("/api/student/planner-data").catch(err => {
           console.error("Planner data call failed:", err);
           return { success: false };
@@ -175,6 +172,7 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
           return { success: false };
         })
       ]);
+
       if (profileRes.success && profileRes.profile) {
         setProfileData(profileRes.profile);
       } else {
@@ -183,18 +181,27 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
       if (progressRes.success) {
         setProgressData(progressRes);
       }
-      if (aiRes.success) {
-        setAiRecs(aiRes);
-      }
       if (plannerRes.success) {
         setPlannerPlan(plannerRes.planHistory);
       }
       if (matchesRes.success) {
         setRecruiterMatches(matchesRes.matches || []);
       }
+      
+      // Set loading to false so UI renders immediately
+      setLoading(false);
+
+      // 2. Fetch slow AI recommendations in the background
+      apiRequest("/api/student/ai-recommendations").then(aiRes => {
+        if (aiRes.success) {
+          setAiRecs(aiRes);
+        }
+      }).catch(err => {
+        console.error("AI recommendations call failed:", err);
+      });
+
     } catch (err: any) {
       setError(err.message || "An error occurred while fetching data.");
-    } finally {
       setLoading(false);
     }
   };
@@ -216,20 +223,26 @@ export function StudentDashboardPage({ onNavigate }: { onNavigate?: (page: strin
           placementBreakdown: placementRes.placementBreakdown,
         }));
       }
-      const [aiRes, plannerRes, matchesRes] = await Promise.all([
-        apiRequest("/api/student/ai-recommendations").catch(() => null),
+      
+      const [plannerRes, matchesRes] = await Promise.all([
         apiRequest("/api/student/planner-data").catch(() => null),
         apiRequest("/api/companies/matches").catch(() => null)
       ]);
-      if (aiRes && aiRes.success) {
-        setAiRecs(aiRes);
-      }
+      
       if (plannerRes && plannerRes.success) {
         setPlannerPlan(plannerRes.planHistory);
       }
       if (matchesRes && matchesRes.success) {
         setRecruiterMatches(matchesRes.matches || []);
       }
+      
+      // Fetch slow AI recs in background
+      apiRequest("/api/student/ai-recommendations").then(aiRes => {
+        if (aiRes && aiRes.success) {
+          setAiRecs(aiRes);
+        }
+      }).catch(() => null);
+
     } catch (err) {
       console.error("Failed to refresh progress:", err);
     }

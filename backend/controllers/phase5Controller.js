@@ -7,6 +7,11 @@ import Goal from "../models/Goal.js";
 import StudentTask from "../models/StudentTask.js";
 import { buildStudentContext } from "../utils/contextBuilder.js";
 import { analyzeResume, generateActionChecklist, generateRecommendation, chatWithMentor, generateWeeklySummary } from "../utils/aiService.js";
+import { calculateMatchScore } from "../utils/matchScoring.js";
+import { logStudentMatchAudit, logCompanyMatchAudit } from "../utils/auditTrail.js";
+import MatchScoreHistory from "../models/MatchScoreHistory.js";
+import { validateMatchesWithMarket } from "../services/marketValidationService.js";
+import { MarketSummary } from "../models/MarketIntelligence.js";
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const pdfParse = require('pdf-parse');
@@ -112,6 +117,8 @@ export const uploadResume = async (req, res, next) => {
       throw new Error("Student profile not found.");
     }
 
+    const oldProfile = profile.toObject();
+
     // Deterministic check to ensure it's a resume using categories
     const lowerText = pdfText.toLowerCase();
     const categories = {
@@ -208,6 +215,7 @@ export const uploadResume = async (req, res, next) => {
       profile.skillVerification = { verified: false };
     }
 
+    await logStudentMatchAudit(oldProfile, profile, "resume_reanalyzed");
     await profile.save();
 
     res.json({
@@ -236,53 +244,10 @@ export const getRecruiterMatches = async (req, res, next) => {
     
     // Calculate match score for each company
     const matches = companies.map(company => {
-      let score = 0;
+      const matchData = calculateMatchScore(profile, company);
       
-      // 1. CGPA match (30%)
-      const gpaDiff = profile.gpa - company.minGpa;
-      let gpaScore = 0;
-      if (gpaDiff >= 0) gpaScore = 30;
-      else if (gpaDiff >= -0.5) gpaScore = 15; // close match
-
-      // 2. Skills match (40%)
-      let matchedSkills = [];
-      let missingSkills = [];
-      if (company.requiredSkills && company.requiredSkills.length > 0) {
-        const studentSkillsLower = (profile.skills || []).map(s => s.toLowerCase());
-        company.requiredSkills.forEach(s => {
-          if (studentSkillsLower.includes(s.toLowerCase())) {
-            matchedSkills.push(s);
-          } else {
-            missingSkills.push(s);
-          }
-        });
-        score += (matchedSkills.length / company.requiredSkills.length) * 40;
-      } else {
-        score += 40; // free points if no requirements
-      }
-
-      // 3. Preferred tech match (30%)
-      let matchedTech = [];
-      if (company.preferredTech && company.preferredTech.length > 0) {
-        const studentTechLower = (profile.resumeDetails?.technologies || profile.resumeDetails?.technicalSkills || []).map(t => t.toLowerCase());
-        company.preferredTech.forEach(t => {
-          if (studentTechLower.includes(t.toLowerCase())) {
-            matchedTech.push(t);
-            if (!matchedSkills.includes(t)) matchedSkills.push(t);
-          } else {
-            if (!missingSkills.includes(t)) missingSkills.push(t);
-          }
-        });
-        score += (matchedTech.length / company.preferredTech.length) * 30;
-      } else {
-        score += 30;
-      }
-
-      const totalMatchScore = Math.min(100, Math.round(gpaScore + score));
-      
-      let recommendation = "Apply now!";
-      if (missingSkills.length > 0) recommendation = `Acquire ${missingSkills[0]} to increase match score.`;
-      if (gpaScore === 0) recommendation = `Increase GPA to meet the ${company.minGpa} cutoff.`;
+      // If suppressed based on soft GPA logic, return null
+      if (matchData.isSuppressed) return null;
 
       return {
         companyId: company._id,
@@ -293,20 +258,30 @@ export const getRecruiterMatches = async (req, res, next) => {
         logo: company.logo,
         minGpa: company.minGpa,
         requiredSkills: company.requiredSkills,
-        matchScore: totalMatchScore,
-        eligible: profile.gpa >= company.minGpa,
-        matchedSkills,
-        missingSkills,
-        recommendation
+        matchScore: matchData.totalMatchScore,
+        eligible: matchData.eligibilityTier === "eligible",
+        eligibilityTier: matchData.eligibilityTier,
+        matchedSkills: matchData.matchedSkills,
+        missingSkills: matchData.missingSkills,
+        recommendation: matchData.recommendation
       };
-    });
+    }).filter(Boolean); // Filter out suppressed companies
 
     // Sort by match score descending
     matches.sort((a, b) => b.matchScore - a.matchScore);
 
+    let marketInsights = null;
+    const location = profile.location || "Bangalore";
+    const marketSummary = await MarketSummary.findOne({ location });
+    
+    if (marketSummary) {
+      marketInsights = await validateMatchesWithMarket(profile, matches, marketSummary);
+    }
+
     res.json({
       success: true,
-      matches
+      matches,
+      marketInsights
     });
   } catch (error) {
     next(error);
@@ -405,6 +380,10 @@ export const addCompany = async (req, res, next) => {
       logo: logo || "🏢"
     });
 
+    // An empty company object as "oldCompany" to force a match score diff (simulating going from 0 score to new score)
+    const oldCompany = { minGpa: 10, requiredSkills: ["impossible_skill_xyz"], preferredTech: [] };
+    await logCompanyMatchAudit(oldCompany, company, "company_requirements_updated");
+
     res.status(201).json({
       success: true,
       company
@@ -486,6 +465,30 @@ export const getAiRecommendations = async (req, res, next) => {
       currentReadiness: context.studentProfile.placementReadiness,
       predictedAfterCompletion: recsResult.predictedAfterCompletion,
       recommendations: recsResult.recommendations
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get match score audit history for the student
+// @route   GET /api/student/match-history
+// @access  Private
+export const getMatchScoreHistory = async (req, res, next) => {
+  try {
+    const profile = await StudentProfile.findOne({ user: req.user._id });
+    if (!profile) {
+      res.status(404);
+      throw new Error("Student profile not found.");
+    }
+    
+    const history = await MatchScoreHistory.find({ student: profile._id })
+      .populate("company", "name logo")
+      .sort({ changedAt: -1 });
+
+    res.json({
+      success: true,
+      history
     });
   } catch (error) {
     next(error);
