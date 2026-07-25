@@ -1,4 +1,6 @@
 import StudentProfile from "../models/StudentProfile.js";
+import StudentTask from "../models/StudentTask.js";
+import { logStudentMatchAudit } from "../utils/auditTrail.js";
 import User from "../models/User.js";
 import Assignment from "../models/Assignment.js";
 import Project from "../models/Project.js";
@@ -119,6 +121,8 @@ export const updateOwnProfile = async (req, res, next) => {
       await User.findByIdAndUpdate(req.user._id, { name });
     }
 
+    const oldProfile = profile.toObject();
+
     // Capture first-time onboarding flag
     const isFirstTimeOnboarding = setupCompleted && !profile.setupCompleted;
 
@@ -188,6 +192,10 @@ export const updateOwnProfile = async (req, res, next) => {
         "Keep practicing DSA problems daily to boost your coding score",
         "Review your placement readiness with academic mentors"
       ];
+    }
+
+    if (gpa !== undefined && Number(gpa) !== oldProfile.gpa) {
+      await logStudentMatchAudit(oldProfile, profile, "gpa_updated");
     }
 
     // Save updated profile

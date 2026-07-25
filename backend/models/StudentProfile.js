@@ -210,6 +210,7 @@ const studentProfileSchema = new mongoose.Schema(
           date: { type: Date, default: Date.now }
         }
       ],
+      lastMarketInsight: { type: String, default: "" },
       lastUpdated: { type: Date }
     }
   },

@@ -1,4 +1,13 @@
 import dotenv from "dotenv";
+import { z } from "zod";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const fallbackQuestionsPath = path.join(__dirname, "../data/fallbackQuestions.json");
+const fallbackQuestionsBank = JSON.parse(fs.readFileSync(fallbackQuestionsPath, "utf-8"));
 
 dotenv.config();
 
@@ -10,7 +19,7 @@ dotenv.config();
  * @param {Array} history Conversation history
  * @returns {Promise<string|null>} The generated text response or null if failed
  */
-const callGemini = async (systemPrompt, userPrompt, history = []) => {
+const callGemini = async (systemPrompt, userPrompt, history = [], signal = null) => {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
 
@@ -40,6 +49,7 @@ const callGemini = async (systemPrompt, userPrompt, history = []) => {
       headers: {
         "Content-Type": "application/json"
       },
+      signal,
       body: JSON.stringify({
         systemInstruction: {
           parts: [{ text: systemPrompt }]
@@ -75,7 +85,7 @@ const callGemini = async (systemPrompt, userPrompt, history = []) => {
  * @param {Array} history Conversation history
  * @returns {Promise<string|null>} The generated text response or null if failed
  */
-const callOpenAI = async (systemPrompt, userPrompt, history = []) => {
+const callOpenAI = async (systemPrompt, userPrompt, history = [], signal = null) => {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return null;
 
@@ -101,6 +111,7 @@ const callOpenAI = async (systemPrompt, userPrompt, history = []) => {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`
       },
+      signal,
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages,
@@ -127,13 +138,13 @@ const callOpenAI = async (systemPrompt, userPrompt, history = []) => {
 /**
  * Dispatches the prompt to Gemini (primary) or OpenAI (fallback).
  */
-const generateResponse = async (systemPrompt, userPrompt, history = []) => {
+const generateResponse = async (systemPrompt, userPrompt, history = [], signal = null) => {
   // 1. Try Google Gemini API
-  let response = await callGemini(systemPrompt, userPrompt, history);
+  let response = await callGemini(systemPrompt, userPrompt, history, signal);
   if (response) return response;
 
   // 2. Try OpenAI API as fallback
-  response = await callOpenAI(systemPrompt, userPrompt, history);
+  response = await callOpenAI(systemPrompt, userPrompt, history, signal);
   if (response) return response;
 
   return null;
@@ -146,10 +157,54 @@ function parseJSON(text) {
     const clean = text.replace(/```json/gi, "").replace(/```/g, "").trim();
     return JSON.parse(clean);
   } catch (e) {
-    console.error("❌ [AI Service] JSON parsing failed for raw output:", text);
     return null;
   }
 }
+
+/**
+ * Reliable wrapper with schema validation, retries, timeout, and fallback logic.
+ */
+const callGeminiSafely = async (systemPrompt, userPrompt, schema, fallbackFn, options = {}) => {
+  const timeoutMs = options.timeoutMs || 15000;
+  const history = options.history || [];
+
+  const attempt = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const responseText = await generateResponse(systemPrompt, userPrompt, history, controller.signal);
+      clearTimeout(timeoutId);
+      
+      if (!responseText) throw new Error("Empty response from AI");
+
+      if (schema instanceof z.ZodString) {
+        return schema.parse(responseText);
+      }
+
+      const parsed = parseJSON(responseText);
+      if (!parsed) {
+        throw new Error("JSON parsing failed. Raw response: " + responseText.substring(0, 100) + "...");
+      }
+
+      return schema.parse(parsed);
+    } catch (err) {
+      clearTimeout(timeoutId);
+      throw err;
+    }
+  };
+
+  try {
+    return await attempt();
+  } catch (err1) {
+    console.warn("⚠️ [AI Service] First attempt failed:", err1.message, "| Retrying once...");
+    try {
+      return await attempt();
+    } catch (err2) {
+      console.error("❌ [AI Service] Second attempt failed:", err2.message, "| Triggering fallback.");
+      return fallbackFn();
+    }
+  }
+};
 
 // ──────────────────────────────────────────────────────────────
 // EXPOSED MODULAR INTERFACES
@@ -186,46 +241,54 @@ Do not write any other text or formatting. Just JSON.`;
 
 Evaluate gap, assign readiness boosts (+3% to +10%) and output the JSON.`;
 
-  const rawText = await generateResponse(systemPrompt, userPrompt);
-  const parsed = parseJSON(rawText);
-  if (parsed && parsed.recommendations) return parsed;
+  const schema = z.object({
+    predictedAfterCompletion: z.number(),
+    recommendations: z.array(z.object({
+      title: z.string(),
+      explanation: z.string(),
+      impact: z.number()
+    }))
+  });
 
-  // Rule-based Fallback
-  console.log("ℹ️ [AI Service] generateRecommendation falling back to local engine.");
-  const allRecs = [];
-  if (profile.resumeScore < 85) {
-    allRecs.push({
-      title: "Improve your Resume",
-      explanation: "quantify project accomplishments and align terms with recruiter search requirements.",
-      impact: Math.max(2, Math.round((85 - profile.resumeScore) * 0.25))
-    });
-  }
-  if (studentContext.projects.length < 3) {
-    allRecs.push({
-      title: "Complete a portfolio Project",
-      explanation: `Hiring criteria for '${profile.careerGoal}' roles prioritize hands-on experience. Build another full stack application.`,
-      impact: 8
-    });
-  }
-  if (profile.skills.length < 5) {
-    allRecs.push({
-      title: "Practice DSA coding problems",
-      explanation: "Leetcode dynamic programming and trees are frequently evaluated by top recruiters.",
-      impact: 6
-    });
-  }
-  if (allRecs.length === 0) {
-    allRecs.push({
-      title: "Schedule a Mock Interview",
-      explanation: "Practice behavior rounds and system architecture prep.",
-      impact: 4
-    });
-  }
-  const sumBoost = allRecs.reduce((acc, curr) => acc + curr.impact, 0);
-  return {
-    predictedAfterCompletion: Math.min(100, profile.placementReadiness + sumBoost),
-    recommendations: allRecs.slice(0, 3)
+  const fallbackFn = () => {
+    console.log("ℹ️ [AI Service] generateRecommendation falling back to local engine.");
+    const allRecs = [];
+    if (profile.resumeScore < 85) {
+      allRecs.push({
+        title: "Improve your Resume",
+        explanation: "quantify project accomplishments and align terms with recruiter search requirements.",
+        impact: Math.max(2, Math.round((85 - profile.resumeScore) * 0.25))
+      });
+    }
+    if (studentContext.projects.length < 3) {
+      allRecs.push({
+        title: "Complete a portfolio Project",
+        explanation: `Hiring criteria for '${profile.careerGoal}' roles prioritize hands-on experience. Build another full stack application.`,
+        impact: 8
+      });
+    }
+    if (profile.skills.length < 5) {
+      allRecs.push({
+        title: "Practice DSA coding problems",
+        explanation: "Leetcode dynamic programming and trees are frequently evaluated by top recruiters.",
+        impact: 6
+      });
+    }
+    if (allRecs.length === 0) {
+      allRecs.push({
+        title: "Schedule a Mock Interview",
+        explanation: "Practice behavior rounds and system architecture prep.",
+        impact: 4
+      });
+    }
+    const sumBoost = allRecs.reduce((acc, curr) => acc + curr.impact, 0);
+    return {
+      predictedAfterCompletion: Math.min(100, profile.placementReadiness + sumBoost),
+      recommendations: allRecs.slice(0, 3)
+    };
   };
+
+  return await callGeminiSafely(systemPrompt, userPrompt, schema, fallbackFn);
 };
 
 /**
@@ -264,43 +327,53 @@ Do not write any other text or formatting. Just JSON.`;
 
 Create optimal schedule, determine which rescheduledTaskIds must wait, compile reasoning explanation and return the JSON.`;
 
-  const rawText = await generateResponse(systemPrompt, userPrompt);
-  const parsed = parseJSON(rawText);
-  if (parsed && parsed.todayPlan) return parsed;
-
-  // Rule-based Fallback
-  console.log("ℹ️ [AI Service] generateDailyPlan falling back to local engine.");
-  const MAX_WORKLOAD_MINUTES = 210;
-  let currentLoad = 0;
-  const todayPlan = [];
-  const rescheduledTaskIds = [];
-
-  const combined = [...missedTasksList, ...pendingTasksList];
-  combined.forEach(t => {
-    const duration = t.estimatedDurationMinutes || 60;
-    if (currentLoad + duration <= MAX_WORKLOAD_MINUTES) {
-      todayPlan.push({
-        taskId: t.id,
-        title: t.title,
-        durationMinutes: duration,
-        priority: t.priority || "High"
-      });
-      currentLoad += duration;
-    } else {
-      rescheduledTaskIds.push(t.id);
-    }
+  const schema = z.object({
+    reasoning: z.string(),
+    todayPlan: z.array(z.object({
+      taskId: z.string(),
+      title: z.string(),
+      durationMinutes: z.number(),
+      priority: z.string()
+    })),
+    rescheduledTaskIds: z.array(z.string())
   });
 
-  const missedNames = missedTasksList.map(m => m.title);
-  const reasoning = `Your previous plan is no longer optimal. You missed: ${
-    missedNames.length > 0 ? missedNames.join(", ") : "None"
-  }. I've reorganized today's schedule to balance priority tasks under a 3.5 hour study window.`;
+  const fallbackFn = () => {
+    console.log("ℹ️ [AI Service] generateDailyPlan falling back to local engine.");
+    const MAX_WORKLOAD_MINUTES = 210;
+    let currentLoad = 0;
+    const todayPlan = [];
+    const rescheduledTaskIds = [];
 
-  return {
-    reasoning,
-    todayPlan,
-    rescheduledTaskIds
+    const combined = [...missedTasksList, ...pendingTasksList];
+    combined.forEach(t => {
+      const duration = t.estimatedDurationMinutes || 60;
+      if (currentLoad + duration <= MAX_WORKLOAD_MINUTES) {
+        todayPlan.push({
+          taskId: t.id,
+          title: t.title,
+          durationMinutes: duration,
+          priority: t.priority || "High"
+        });
+        currentLoad += duration;
+      } else {
+        rescheduledTaskIds.push(t.id);
+      }
+    });
+
+    const missedNames = missedTasksList.map(m => m.title);
+    const reasoning = `Your previous plan is no longer optimal. You missed: ${
+      missedNames.length > 0 ? missedNames.join(", ") : "None"
+    }. I've reorganized today's schedule to balance priority tasks under a 3.5 hour study window.`;
+
+    return {
+      reasoning,
+      todayPlan,
+      rescheduledTaskIds
+    };
   };
+
+  return await callGeminiSafely(systemPrompt, userPrompt, schema, fallbackFn);
 };
 
 /**
@@ -324,19 +397,24 @@ Do not write any other text. Just JSON.`;
 - Completed tasks count: ${studentContext.planner?.completedTasks?.length || 0}
 - Missed tasks count: ${studentContext.planner?.missedTasks?.length || 0}`;
 
-  const rawText = await generateResponse(systemPrompt, userPrompt);
-  const parsed = parseJSON(rawText);
-  if (parsed && parsed.summary) return parsed;
+  const schema = z.object({
+    summary: z.string(),
+    idealWorkloadHours: z.number(),
+    focusArea: z.string()
+  });
 
-  // Rule-based Fallback
-  console.log("ℹ️ [AI Service] generateWeeklySummary falling back to local engine.");
-  const completed = studentContext.planner?.completedTasks?.length || 0;
-  const missed = studentContext.planner?.missedTasks?.length || 0;
-  return {
-    summary: `You completed ${completed} tasks this week, and missed ${missed}. Focus on consistency, keeping weekly workload around 20 hours.`,
-    idealWorkloadHours: 20,
-    focusArea: completed > missed ? "Placement Prep" : "Planner Mastery"
+  const fallbackFn = () => {
+    console.log("ℹ️ [AI Service] generateWeeklySummary falling back to local engine.");
+    const completed = studentContext.planner?.completedTasks?.length || 0;
+    const missed = studentContext.planner?.missedTasks?.length || 0;
+    return {
+      summary: `You completed ${completed} tasks this week, and missed ${missed}. Focus on consistency, keeping weekly workload around 20 hours.`,
+      idealWorkloadHours: 20,
+      focusArea: completed > missed ? "Placement Prep" : "Planner Mastery"
+    };
   };
+
+  return await callGeminiSafely(systemPrompt, userPrompt, schema, fallbackFn);
 };
 
 /**
@@ -374,41 +452,18 @@ Guidelines:
 3. Reference their career goal, CGPA, projects, or study preferences directly when answering.
 4. Keep answers focused, practical, and highly actionable. Avoid long generic essays.`;
 
-  const reply = await generateResponse(systemPrompt, userMessage, history);
-  if (reply) return reply;
+  const fallbackFn = () => {
+    console.log("ℹ️ [AI Service] chatWithMentor returning fallback static message.");
+    return "I'm having trouble responding right now — please try again in a moment.";
+  };
 
-  // Rule-based Fallback
-  console.log("ℹ️ [AI Service] chatWithMentor falling back to local engine.");
-  const lowerMsg = userMessage.toLowerCase();
-  let replyText = `Hi ${profile.name}! `;
-  if (lowerMsg.includes("now") || lowerMsg.includes("task") || lowerMsg.includes("left") || lowerMsg.includes("hour")) {
-    const pending = studentContext.planner?.todayTasks || [];
-    if (pending.length > 0) {
-      replyText += `Since you have some time available, focus on: **${pending[0].title}** (${pending[0].estimatedDurationMinutes} mins). It fits your available daily limit of ${profile.availableStudyHours} hours and directly matches your placement path for ${profile.careerGoal}.`;
-    } else {
-      replyText += `All tasks are complete! I recommend reviewing your matches or uploading a revised resume (current score is ${profile.resumeScore}%).`;
-    }
-  } else if (lowerMsg.includes("match") || lowerMsg.includes("eligib") || lowerMsg.includes("company") || lowerMsg.includes("placement")) {
-    const count = (studentContext.recruiterData?.matches || []).filter(m => m.eligible).length;
-    replyText += `You are currently eligible for **${count} matching companies** based on your CGPA of ${profile.gpa}. Update your resume checklist to unlock more recruiters.`;
-  } else if (lowerMsg.includes("skill") || lowerMsg.includes("interview") || lowerMsg.includes("resume")) {
-    const missing = [...new Set((studentContext.recruiterData?.matches || []).flatMap(m => m.missingSkills || []))];
-    const topMissing = missing.slice(0, 3);
-    if (topMissing.length > 0) {
-      replyText += `To improve your resume score (${profile.resumeScore}%), focus on acquiring these skills: **${topMissing.join(", ")}**. These are frequently requested by companies you're aiming for.`;
-    } else {
-      replyText += `Your current skills (${profile.skills.join(", ")}) are looking solid! Consider mock interviews to prep.`;
-    }
-  } else {
-    replyText += `I'm here to help you achieve your career goal of becoming a **${profile.careerGoal}**. What specific task or recruiter requirement can we look at next?`;
-  }
-  return replyText;
+  return await callGeminiSafely(systemPrompt, userMessage, z.string(), fallbackFn, { history });
 };
 
 /**
  * 5. Analyze Resume Content
  */
-export const analyzeResume = async (resumeText) => {
+export const analyzeResume = async (resumeText, profile = null) => {
   const systemPrompt = `You are an expert AI Resume Analyzer for Career Intelligence.
 Extract information from the provided resume text and return ONLY a valid JSON object.
 IMPORTANT: First determine if the text provided is actually a resume. If it is NOT a resume (e.g. a random document, an essay, a syllabus, or gibberish), set "isResume" to false and leave the rest empty.
@@ -434,28 +489,65 @@ Do not include any extra markdown formatting outside the JSON block.`;
 
   const userPrompt = `Resume Text:\n${resumeText}`;
 
-  const rawText = await generateResponse(systemPrompt, userPrompt);
-  const parsed = parseJSON(rawText);
-  
-  if (parsed) return parsed;
-  
-  // Fallback
-  return {
-    isResume: true,
-    technicalSkills: ["React", "Node.js", "JavaScript"],
-    softSkills: ["Communication", "Teamwork"],
-    programmingLanguages: ["JavaScript", "Python"],
-    frameworks: ["Express"],
-    libraries: [],
-    tools: ["Git"],
-    databases: ["MongoDB"],
-    certifications: [],
-    education: "B.Tech Computer Science",
-    projects: ["E-commerce App", "Task Manager"],
-    experience: [],
-    github: "",
-    linkedin: ""
+  const schema = z.object({
+    isResume: z.boolean(),
+    technicalSkills: z.array(z.string()).optional(),
+    softSkills: z.array(z.string()).optional(),
+    programmingLanguages: z.array(z.string()).optional(),
+    frameworks: z.array(z.string()).optional(),
+    libraries: z.array(z.string()).optional(),
+    tools: z.array(z.string()).optional(),
+    databases: z.array(z.string()).optional(),
+    certifications: z.array(z.string()).optional(),
+    education: z.string().optional(),
+    projects: z.array(z.string()).optional(),
+    experience: z.array(z.string()).optional(),
+    github: z.string().optional(),
+    linkedin: z.string().optional()
+  });
+
+  const fallbackFn = () => {
+    console.log("ℹ️ [AI Service] analyzeResume returning fallback data from DB.");
+    if (profile && profile.resumeDetails) {
+      return {
+        isFallback: true,
+        isResume: true,
+        technicalSkills: profile.resumeDetails.technicalSkills || [],
+        softSkills: profile.resumeDetails.softSkills || [],
+        programmingLanguages: profile.resumeDetails.programmingLanguages || [],
+        frameworks: profile.resumeDetails.frameworks || [],
+        libraries: profile.resumeDetails.libraries || [],
+        tools: profile.resumeDetails.tools || [],
+        databases: profile.resumeDetails.databases || [],
+        certifications: profile.resumeDetails.certifications || [],
+        education: profile.resumeDetails.education || "",
+        projects: profile.resumeDetails.projects || [],
+        experience: profile.resumeDetails.experience || [],
+        github: profile.resumeDetails.github || "",
+        linkedin: profile.resumeDetails.linkedin || ""
+      };
+    }
+    // Deep fallback if profile isn't available
+    return {
+      isFallback: true,
+      isResume: true,
+      technicalSkills: ["React", "Node.js", "JavaScript"],
+      softSkills: ["Communication", "Teamwork"],
+      programmingLanguages: ["JavaScript", "Python"],
+      frameworks: ["Express"],
+      libraries: [],
+      tools: ["Git"],
+      databases: ["MongoDB"],
+      certifications: [],
+      education: "B.Tech Computer Science",
+      projects: ["E-commerce App", "Task Manager"],
+      experience: [],
+      github: "",
+      linkedin: ""
+    };
   };
+
+  return await callGeminiSafely(systemPrompt, userPrompt, schema, fallbackFn);
 };
 
 /**
@@ -475,17 +567,26 @@ ${JSON.stringify(resumeAnalysis)}
 
 Suggest actionable improvements (e.g. Add measurable achievements, add GitHub profile).`;
 
-  const rawText = await generateResponse(systemPrompt, userPrompt);
-  const parsed = parseJSON(rawText);
-  if (parsed && parsed.checklist) return parsed.checklist;
+  const schema = z.object({
+    checklist: z.array(z.string())
+  });
 
-  // Fallback
-  return [
-    "Add measurable achievements to projects",
-    "Include a link to your GitHub profile",
-    "List specific coursework relevant to your goal",
-    "Highlight soft skills like leadership"
-  ];
+  const fallbackFn = () => {
+    console.log("ℹ️ [AI Service] generateActionChecklist returning fallback data from DB.");
+    const profile = studentContext.studentProfile;
+    if (profile && profile.resumeDetails && profile.resumeDetails.actionChecklist) {
+      return { checklist: profile.resumeDetails.actionChecklist };
+    }
+    return { checklist: [
+      "Add measurable achievements to projects",
+      "Include a link to your GitHub profile",
+      "List specific coursework relevant to your goal",
+      "Highlight soft skills like leadership"
+    ] };
+  };
+
+  const parsed = await callGeminiSafely(systemPrompt, userPrompt, schema, fallbackFn);
+  return parsed.checklist;
 };
 
 /**
@@ -513,64 +614,51 @@ Return ONLY a valid JSON object matching this structure:
 
   const userPrompt = `Skills to verify: ${skills.join(", ")}`;
 
-  const rawText = await generateResponse(systemPrompt, userPrompt);
-  const parsed = parseJSON(rawText);
-  if (parsed && parsed.questions) return parsed;
-
-  // Fallback if API fails (e.g. quota exceeded)
-  const fallbackQuestions = [];
-  const commonQuestions = {
-    "React": [
-      { q: "You need to persist a value across renders without causing a re-render. Which hook should you use?", opts: ["useState", "useEffect", "useRef", "useMemo"], c: 2 },
-      { q: "What happens when you call setState in React?", opts: ["It immediately updates the state variable", "It schedules an update to a component's state object", "It forces a synchronous re-render", "It updates the DOM directly"], c: 1 },
-      { q: "How can you prevent a child component from re-rendering when its props haven't changed?", opts: ["React.memo", "useContext", "useReducer", "React.Fragment"], c: 0 }
-    ],
-    "Node.js": [
-      { q: "Which of the following describes Node.js's concurrency model?", opts: ["Multi-threaded blocking", "Single-threaded non-blocking event loop", "Multi-process synchronous", "Single-threaded blocking"], c: 1 },
-      { q: "How do you handle unhandled promise rejections in a Node.js server?", opts: ["process.on('unhandledRejection')", "try/catch around the server start", "window.onerror", "app.use(errorHandler)"], c: 0 },
-      { q: "What is the primary purpose of the 'Buffer' class in Node.js?", opts: ["Caching database queries", "Handling raw binary data", "Buffering HTTP requests to prevent DDOS", "Managing memory garbage collection"], c: 1 }
-    ],
-    "Python": [
-      { q: "What is the difference between a list and a tuple in Python?", opts: ["Lists are mutable, tuples are immutable", "Lists are immutable, tuples are mutable", "Lists can only hold strings", "Tuples are used only for math operations"], c: 0 },
-      { q: "You want to create a generator. What keyword must you use in your function?", opts: ["return", "yield", "generate", "async"], c: 1 },
-      { q: "What does the '__init__' method do in a Python class?", opts: ["It cleans up memory when the object is destroyed", "It acts as a constructor to initialize the object", "It starts the main execution loop", "It imports necessary modules for the class"], c: 1 }
-    ],
-    "JavaScript": [
-      { q: "What will 'console.log(typeof null)' output?", opts: ["null", "undefined", "object", "string"], c: 2 },
-      { q: "You need to execute multiple asynchronous operations concurrently and wait for all to finish. What should you use?", opts: ["Promise.race()", "awaiting them one by one", "Promise.all()", "setTimeout"], c: 2 },
-      { q: "What is closure in JavaScript?", opts: ["A function bundled together with its lexical environment", "A method to close a database connection", "A block of code that executes synchronously", "A way to hide HTML elements"], c: 0 }
-    ]
-  };
-
-  skills.forEach(skill => {
-    if (commonQuestions[skill]) {
-      commonQuestions[skill].forEach(item => {
-        fallbackQuestions.push({ skill, question: item.q, options: item.opts, correctOptionIndex: item.c });
-      });
-    } else {
-      // Generic fallback for unknown skills
-      fallbackQuestions.push({
-        skill,
-        question: `What is a fundamental principle of ${skill}?`,
-        options: ["Object-Oriented Design", "Core execution logic", "Memory allocation", "Standardization"],
-        correctOptionIndex: 1
-      });
-      fallbackQuestions.push({
-        skill,
-        question: `In a production environment, ${skill} is primarily used for:`,
-        options: ["Optimizing build processes", "Enhancing user interfaces", "Solving specific domain problems", "Managing server state"],
-        correctOptionIndex: 2
-      });
-      fallbackQuestions.push({
-        skill,
-        question: `Which scenario best requires the use of ${skill}?`,
-        options: ["When performance scaling is needed", "When styling is the priority", "When database schemas change", "When debugging network layers"],
-        correctOptionIndex: 0
-      });
-    }
+  const schema = z.object({
+    questions: z.array(z.object({
+      skill: z.string(),
+      question: z.string(),
+      options: z.array(z.string()),
+      correctOptionIndex: z.number()
+    }))
   });
 
-  return { questions: fallbackQuestions };
+  const fallbackFn = () => {
+    console.log("ℹ️ [AI Service] generateSkillQuiz falling back to dedicated backup question bank.");
+    const fallbackQuestions = [];
+    
+    skills.forEach(skill => {
+      if (fallbackQuestionsBank[skill]) {
+        fallbackQuestionsBank[skill].forEach(item => {
+          fallbackQuestions.push({ skill, question: item.question, options: item.options, correctOptionIndex: item.correctOptionIndex });
+        });
+      } else {
+        // Generic fallback for unknown skills
+        fallbackQuestions.push({
+          skill,
+          question: `What is a fundamental principle of ${skill}?`,
+          options: ["Object-Oriented Design", "Core execution logic", "Memory allocation", "Standardization"],
+          correctOptionIndex: 1
+        });
+        fallbackQuestions.push({
+          skill,
+          question: `In a production environment, ${skill} is primarily used for:`,
+          options: ["Optimizing build processes", "Enhancing user interfaces", "Solving specific domain problems", "Managing server state"],
+          correctOptionIndex: 2
+        });
+        fallbackQuestions.push({
+          skill,
+          question: `Which scenario best requires the use of ${skill}?`,
+          options: ["When performance scaling is needed", "When styling is the priority", "When database schemas change", "When debugging network layers"],
+          correctOptionIndex: 0
+        });
+      }
+    });
+
+    return { questions: fallbackQuestions };
+  };
+
+  return await callGeminiSafely(systemPrompt, userPrompt, schema, fallbackFn);
 };
 
 /**
@@ -593,12 +681,14 @@ Include specific company names from the market data if relevant. Keep it encoura
 
 Generate the insight:`;
 
-  try {
-    const rawText = await generateResponse(systemPrompt, userPrompt);
-    return rawText.trim() || `Learning ${missingSkills[0]} could significantly improve your placement readiness, as it is highly demanded by top companies right now.`;
-  } catch (error) {
-    console.error("AI Market Insight Error:", error.message);
+  const fallbackFn = () => {
+    console.log("ℹ️ [AI Service] generateMarketInsights returning fallback data.");
+    if (profile && profile.marketIntelligence && profile.marketIntelligence.lastMarketInsight) {
+      return profile.marketIntelligence.lastMarketInsight;
+    }
     return `Learning ${missingSkills[0]} could significantly improve your placement readiness, as it is highly demanded by top companies right now.`;
-  }
+  };
+
+  return await callGeminiSafely(systemPrompt, userPrompt, z.string(), fallbackFn);
 };
 

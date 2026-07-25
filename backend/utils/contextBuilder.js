@@ -4,6 +4,7 @@ import StudentTask from "../models/StudentTask.js";
 import CalendarEvent from "../models/CalendarEvent.js";
 import Company from "../models/Company.js";
 import AiPlanHistory from "../models/AiPlanHistory.js";
+import { calculateMatchScore } from "./matchScoring.js";
 
 /**
  * Aggregates all student context from MongoDB to feed into the AI models.
@@ -28,56 +29,17 @@ export const buildStudentContext = async (userId) => {
 
   // 1. Calculate recruiter match scores & missing skills dynamically
   const recruiterMatches = companies.map(company => {
-    let score = 0;
-    const studentSkillsLower = (profile.skills || []).map(s => s.toLowerCase());
-    const studentTechLower = (profile.resumeDetails?.technologies || []).map(t => t.toLowerCase());
-
-    // GPA match (30%)
-    if (profile.gpa >= company.minGpa) score += 30;
-    else if (profile.gpa >= company.minGpa - 0.5) score += 15;
-
-    // Skills match (40%)
-    let matchedSkillsCount = 0;
-    const missingSkills = [];
-    if (company.requiredSkills && company.requiredSkills.length > 0) {
-      company.requiredSkills.forEach(s => {
-        if (studentSkillsLower.includes(s.toLowerCase())) {
-          matchedSkillsCount++;
-        } else {
-          missingSkills.push(s);
-        }
-      });
-      score += (matchedSkillsCount / company.requiredSkills.length) * 40;
-    } else {
-      score += 40;
-    }
-
-    // Preferred Tech match (30%)
-    let matchedTechCount = 0;
-    if (company.preferredTech && company.preferredTech.length > 0) {
-      company.preferredTech.forEach(t => {
-        if (studentTechLower.includes(t.toLowerCase())) {
-          matchedTechCount++;
-        } else {
-          if (!missingSkills.includes(t)) {
-            missingSkills.push(t);
-          }
-        }
-      });
-      score += (matchedTechCount / company.preferredTech.length) * 30;
-    } else {
-      score += 30;
-    }
-
+    const matchData = calculateMatchScore(profile, company);
     return {
       companyId: company._id.toString(),
       name: company.name,
       role: company.role,
       salary: company.salary,
       minGpa: company.minGpa,
-      matchScore: Math.min(100, Math.round(score)),
-      eligible: profile.gpa >= company.minGpa,
-      missingSkills
+      matchScore: matchData.totalMatchScore,
+      eligible: matchData.eligibilityTier === "eligible",
+      eligibilityTier: matchData.eligibilityTier,
+      missingSkills: matchData.missingSkills
     };
   });
 

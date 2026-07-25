@@ -1,17 +1,23 @@
 import { MarketSummary } from "../models/MarketIntelligence.js";
 import StudentProfile from "../models/StudentProfile.js";
-import { syncMarketData, updateStudentInsights } from "../services/careerPulseService.js";
+import { syncMarketData, updateStudentInsights, syncMarketDataOffline } from "../services/careerPulseService.js";
 
 // @desc    Get live market intelligence dashboard data
 // @route   GET /api/market/live
 // @access  Private
 export const getLiveMarket = async (req, res, next) => {
   try {
-    const summary = await MarketSummary.findOne();
+    const profile = await StudentProfile.findOne({ user: req.user._id });
+    const location = profile?.location && profile.location.trim() !== "" ? profile.location : "Bangalore";
+    
+    let summary = await MarketSummary.findOne({ location });
     if (!summary) {
-      // If none exists, run the sync manually for the first time
-      const newSummary = await syncMarketData();
-      return res.json({ success: true, market: newSummary });
+      // If none exists, try looking for Bangalore as a fallback, or run sync
+      summary = await MarketSummary.findOne({ location: "Bangalore" });
+      if (!summary) {
+         // Should ideally not happen if sync is running
+         return res.json({ success: true, market: null });
+      }
     }
     res.json({ success: true, market: summary });
   } catch (error) {
@@ -35,14 +41,28 @@ export const getPersonalizedMarket = async (req, res, next) => {
   }
 };
 
-// @desc    Manually trigger the market sync (Admin or test purpose)
+// @desc    Manually trigger the market sync with Adzuna
 // @route   POST /api/market/sync
+// @route   POST /api/admin/refresh-market-data
 // @access  Private (Admin)
 export const triggerMarketSync = async (req, res, next) => {
   try {
-    const summary = await syncMarketData();
+    const summaries = await syncMarketData();
     await updateStudentInsights();
-    res.json({ success: true, message: "Market data synced successfully.", summary });
+    res.json({ success: true, message: "Live Market data synced successfully.", summaries });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Manually trigger the market sync offline (JSON)
+// @route   POST /api/market/sync-offline
+// @access  Private (Admin)
+export const triggerMarketSyncOffline = async (req, res, next) => {
+  try {
+    const summaries = await syncMarketDataOffline();
+    await updateStudentInsights();
+    res.json({ success: true, message: "Offline Market data synced successfully.", summaries });
   } catch (error) {
     next(error);
   }

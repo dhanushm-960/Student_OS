@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 
 const marketSummarySchema = mongoose.Schema(
   {
+    location: { type: String, required: true },
+    country: { type: String, default: "IN" },
     topSkills: [
       {
         skill: String,
@@ -21,7 +23,8 @@ const marketSummarySchema = mongoose.Schema(
         count: Number
       }
     ],
-    lastUpdated: { type: Date, default: Date.now }
+    lastUpdated: { type: Date, default: Date.now },
+    lastRefreshedAt: { type: Date, default: Date.now }
   },
   {
     timestamps: true,

@@ -1,0 +1,22 @@
+{
+  "React": [
+    { "question": "You need to persist a value across renders without causing a re-render. Which hook should you use?", "options": ["useState", "useEffect", "useRef", "useMemo"], "correctOptionIndex": 2 },
+    { "question": "What happens when you call setState in React?", "options": ["It immediately updates the state variable", "It schedules an update to a component's state object", "It forces a synchronous re-render", "It updates the DOM directly"], "correctOptionIndex": 1 },
+    { "question": "How can you prevent a child component from re-rendering when its props haven't changed?", "options": ["React.memo", "useContext", "useReducer", "React.Fragment"], "correctOptionIndex": 0 }
+  ],
+  "Node.js": [
+    { "question": "Which of the following describes Node.js's concurrency model?", "options": ["Multi-threaded blocking", "Single-threaded non-blocking event loop", "Multi-process synchronous", "Single-threaded blocking"], "correctOptionIndex": 1 },
+    { "question": "How do you handle unhandled promise rejections in a Node.js server?", "options": ["process.on('unhandledRejection')", "try/catch around the server start", "window.onerror", "app.use(errorHandler)"], "correctOptionIndex": 0 },
+    { "question": "What is the primary purpose of the 'Buffer' class in Node.js?", "options": ["Caching database queries", "Handling raw binary data", "Buffering HTTP requests to prevent DDOS", "Managing memory garbage collection"], "correctOptionIndex": 1 }
+  ],
+  "Python": [
+    { "question": "What is the difference between a list and a tuple in Python?", "options": ["Lists are mutable, tuples are immutable", "Lists are immutable, tuples are mutable", "Lists can only hold strings", "Tuples are used only for math operations"], "correctOptionIndex": 0 },
+    { "question": "You want to create a generator. What keyword must you use in your function?", "options": ["return", "yield", "generate", "async"], "correctOptionIndex": 1 },
+    { "question": "What does the '__init__' method do in a Python class?", "options": ["It cleans up memory when the object is destroyed", "It acts as a constructor to initialize the object", "It starts the main execution loop", "It imports necessary modules for the class"], "correctOptionIndex": 1 }
+  ],
+  "JavaScript": [
+    { "question": "What will 'console.log(typeof null)' output?", "options": ["null", "undefined", "object", "string"], "correctOptionIndex": 2 },
+    { "question": "You need to execute multiple asynchronous operations concurrently and wait for all to finish. What should you use?", "options": ["Promise.race()", "awaiting them one by one", "Promise.all()", "setTimeout"], "correctOptionIndex": 2 },
+    { "question": "What is closure in JavaScript?", "options": ["A function bundled together with its lexical environment", "A method to close a database connection", "A block of code that executes synchronously", "A way to hide HTML elements"], "correctOptionIndex": 0 }
+  ]
+}
