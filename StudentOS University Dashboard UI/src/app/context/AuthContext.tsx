@@ -18,6 +18,7 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   signIn: (email: string, password: string) => Promise<{ token: string; user: UserProfile }>;
+  signInWithGoogle: (idToken: string) => Promise<{ token: string; user: UserProfile }>;
   signUp: (email: string, password: string, name: string) => Promise<{ token: string; user: UserProfile }>;
   signOut: () => Promise<void>;
   clearError: () => void;
@@ -128,6 +129,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const signInWithGoogle = async (idToken: string) => {
+    setError(null);
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/auth/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ idToken })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Google sign-in failed.');
+      }
+
+      const mappedUser: UserProfile = {
+        id: data.user.id || data.user._id,
+        name: data.user.name,
+        email: data.user.email,
+        role: data.user.role,
+        setupCompleted: data.user.setupCompleted,
+        createdAt: data.user.createdAt,
+        updatedAt: data.user.updatedAt
+      };
+
+      localStorage.setItem('studentos_token', data.token);
+      setProfile(mappedUser);
+      return { token: data.token, user: mappedUser };
+    } catch (err: any) {
+      const errMsg = err.message || 'An error occurred during Google sign in.';
+      setError(errMsg);
+      throw new Error(errMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const signUp = async (email: string, password: string, name: string) => {
     setError(null);
     setLoading(true);
@@ -204,7 +245,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user: profile, profile, loading, error, signIn, signUp, signOut, clearError, refreshUser }}>
+    <AuthContext.Provider value={{ user: profile, profile, loading, error, signIn, signInWithGoogle, signUp, signOut, clearError, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

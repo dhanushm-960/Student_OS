@@ -3,11 +3,12 @@ import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import SocialButton from "./ui/SocialButton";
+import { GoogleLogin } from "@react-oauth/google";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function StudentLoginPage() {
-  const { signIn, signOut } = useAuth();
+  const { signIn, signInWithGoogle, signOut } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -16,6 +17,28 @@ export function StudentLoginPage() {
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    setLoading(true);
+    setErrors({});
+    try {
+      const { user } = await signInWithGoogle(credentialResponse.credential);
+      if (user?.role === "student") {
+        navigate("/student/dashboard");
+      } else {
+        await signOut();
+        setErrors({ general: "Access denied. This portal is for students only." });
+      }
+    } catch (err: any) {
+      setErrors({ general: err.message || "Google Sign-in failed." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setErrors({ general: "Google Sign-in was cancelled or failed." });
+  };
 
   function validate() {
     const e: typeof errors = {};
@@ -68,24 +91,17 @@ export function StudentLoginPage() {
             <p className="text-sm text-slate-400">Sign in with your college credentials</p>
           </div>
 
-          {/* Social Sign In Buttons (Side-by-Side) */}
-          <div className="grid grid-cols-2 gap-3 mb-5">
-            <SocialButton 
-              provider="Google" 
-              onClick={() => alert("OAuth not configured in this demo")}
-              className="bg-white/5 border-white/5 text-slate-200 hover:bg-white/10 hover:border-white/10 transition-all duration-200"
-              disabled={loading}
-            >
-              Google
-            </SocialButton>
-            <SocialButton 
-              provider="Microsoft" 
-              onClick={() => alert("OAuth not configured in this demo")}
-              className="bg-white/5 border-white/5 text-slate-200 hover:bg-white/10 hover:border-white/10 transition-all duration-200"
-              disabled={loading}
-            >
-              Microsoft
-            </SocialButton>
+          {/* Social Sign In */}
+          <div className="flex justify-center w-full mb-5 transition-transform hover:scale-[1.02]">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              theme="filled_black"
+              shape="pill"
+              size="large"
+              text="continue_with"
+              width="320"
+            />
           </div>
 
           {/* Divider */}

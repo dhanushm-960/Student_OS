@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import StudentProfile from "../models/StudentProfile.js";
 import generateToken from "../utils/generateToken.js";
+import { OAuth2Client } from "google-auth-library";
 
 // @desc    Register a new student
 // @route   POST /api/auth/register
@@ -150,5 +151,97 @@ export const getCurrentUser = async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+};
+
+// @desc    Login with Google
+// @route   POST /api/auth/google
+// @access  Public
+export const googleSignIn = async (req, res, next) => {
+  const { idToken } = req.body;
+  if (!idToken) {
+    res.status(400);
+    return next(new Error("Google ID token is required."));
+  }
+
+  try {
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const { email, name, hd } = payload;
+
+    // Strict domain check
+    const domain = "atriauniversity.edu.in";
+    if (hd !== domain && !email.endsWith(`@${domain}`)) {
+      res.status(403);
+      return next(new Error(`Please sign in with your Atria University email (@${domain})`));
+    }
+
+    let user = await User.findOne({ email });
+    let profile = null;
+
+    if (!user) {
+      // Create new user
+      user = await User.create({
+        name: name || email.split("@")[0],
+        email,
+        authProvider: "google",
+        role: "student",
+      });
+
+      const uniqueNumber = Math.floor(100 + Math.random() * 900);
+      const rollNumber = `STU22${uniqueNumber}`;
+
+      profile = await StudentProfile.create({
+        user: user._id,
+        rollNumber,
+        department: "CSE",
+        year: 1,
+        gpa: 0,
+        attendance: 0,
+        dsaProgress: 0,
+        projectsCompleted: 0,
+        placementReadiness: 0,
+        goalProgress: 0,
+        riskLevel: "Low",
+        university: "Atria University",
+        degree: "",
+        phone: "",
+        location: "",
+        major: "",
+        completedCredits: 0,
+        resumeVersion: "v1.0",
+        setupCompleted: false,
+        aiRecommendations: ["Complete your onboarding profile"]
+      });
+    } else {
+      // If user exists, optionally update authProvider
+      if (user.authProvider !== "google") {
+        user.authProvider = "google";
+        await user.save();
+      }
+      if (user.role === "student") {
+        profile = await StudentProfile.findOne({ user: user._id });
+      }
+    }
+
+    res.json({
+      success: true,
+      token: generateToken(user._id),
+      user: {
+        id: user._id,
+        name: user.name,
+        role: user.role,
+        email: user.email,
+        setupCompleted: profile ? profile.setupCompleted : false,
+      },
+    });
+
+  } catch (error) {
+    res.status(401);
+    next(new Error("Invalid Google token or authentication failed."));
   }
 };

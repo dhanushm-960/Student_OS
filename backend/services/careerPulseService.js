@@ -238,6 +238,7 @@ export const updateStudentInsights = async () => {
       profile.marketIntelligence = {
         missingSkills,
         recommendation,
+        lastMarketInsight: recommendation,
         aiAlerts: alerts.slice(0, 10), // keep last 10
         matchHistory: newMatches,
         lastUpdated: new Date()

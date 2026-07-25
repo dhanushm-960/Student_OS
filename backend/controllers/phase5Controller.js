@@ -143,7 +143,7 @@ export const uploadResume = async (req, res, next) => {
     }
 
     // Call Gemini AI for extraction
-    const extractedData = await analyzeResume(pdfText);
+    const extractedData = await analyzeResume(pdfText, profile);
 
     const { technicalSkills, softSkills, programmingLanguages, frameworks, libraries, tools, databases, certifications, education, projects, experience, github, linkedin } = extractedData;
     const combinedSkills = [...new Set([...(technicalSkills||[]), ...(programmingLanguages||[]), ...(frameworks||[]), ...(tools||[]), ...(databases||[])])];
@@ -170,6 +170,7 @@ export const uploadResume = async (req, res, next) => {
     const actionChecklist = await generateActionChecklist(extractedData, { studentProfile: profile });
 
     profile.resumeDetails = {
+      isFallback: extractedData.isFallback || false,
       score,
       strength,
       skills: combinedSkills,
