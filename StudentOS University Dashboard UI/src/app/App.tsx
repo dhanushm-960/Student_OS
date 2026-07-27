@@ -23,6 +23,8 @@ import { DashboardPage } from "./components/DashboardPage";
 import { StudentsPage } from "./components/StudentsPage";
 import { ReportsPage } from "./components/ReportsPage";
 import { PlaceholderPage } from "./components/PlaceholderPage";
+import { StudentDrivesPage } from "./components/StudentDrivesPage";
+import { AdminDrivesPage } from "./components/AdminDrivesPage";
 
 function AppRoutes() {
   const navigate = useNavigate();
@@ -32,6 +34,7 @@ function AppRoutes() {
       "student-dashboard": "/student/dashboard",
       profile: "/student/profile",
       planner: "/student/planner",
+      "student-drives": "/student/drives",
       "ai-mentor": "/student/ai-mentor",
       "placement-student": "/student/career-intelligence",
       settings: "/student/settings",
@@ -42,6 +45,7 @@ function AppRoutes() {
       students: "/admin/students",
       reports: "/admin/reports",
       placement: "/admin/placement",
+      "admin-drives": "/admin/drives",
       settings: "/admin/settings",
     };
 
@@ -68,6 +72,7 @@ function AppRoutes() {
         <Route path="/student/planner" element={<PlannerPage />} />
         <Route path="/student/ai-mentor" element={<AIMentorPage />} />
         <Route path="/student/career-intelligence" element={<CareerIntelligencePage />} />
+        <Route path="/student/drives" element={<StudentDrivesPage />} />
         <Route path="/student/settings" element={<PlaceholderPage title="Settings" />} />
       </Route>
 
@@ -77,6 +82,7 @@ function AppRoutes() {
         <Route path="/admin/students" element={<StudentsPage />} />
         <Route path="/admin/reports" element={<ReportsPage />} />
         <Route path="/admin/placement" element={<DashboardPage section="placement" onNavigate={handleNavigate} />} />
+        <Route path="/admin/drives" element={<AdminDrivesPage />} />
         <Route path="/admin/settings" element={<PlaceholderPage title="Settings" />} />
       </Route>
 

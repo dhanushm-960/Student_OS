@@ -9,6 +9,7 @@ import { useAuth } from "../context/AuthContext";
 const studentNavItems = [
   { id: "student-dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "planner", label: "Planner", icon: Calendar },
+  { id: "student-drives", label: "Recruitment Drives", icon: Briefcase },
   { id: "placement-student", label: "Career Intelligence", icon: Briefcase },
   { id: "ai-mentor", label: "AI Mentor", icon: Brain },
   { id: "profile", label: "Profile", icon: Users },
@@ -19,6 +20,7 @@ const adminNavItems = [
   { id: "admin-dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "students", label: "Students", icon: Users },
   { id: "reports", label: "Reports", icon: BarChart3 },
+  { id: "admin-drives", label: "Drives & Apps", icon: Briefcase },
   { id: "placement", label: "Placement", icon: Briefcase },
 ];
 

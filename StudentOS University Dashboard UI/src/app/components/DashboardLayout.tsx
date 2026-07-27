@@ -48,6 +48,7 @@ export function DashboardLayout({ allowedRole }: { allowedRole: "admin" | "stude
     else if (pathname.endsWith("/student/planner")) { activePage = "planner"; title = "Planner"; subtitle = "Tasks, deadlines and calendar"; }
     else if (pathname.endsWith("/student/ai-mentor")) { activePage = "ai-mentor"; title = "AI Mentor"; subtitle = "Personalized guidance and study recommendations"; }
     else if (pathname.endsWith("/student/career-intelligence")) { activePage = "placement-student"; title = "Career Intelligence"; subtitle = "Placement readiness and recruiter matches"; }
+    else if (pathname.endsWith("/student/drives")) { activePage = "student-drives"; title = "Recruitment Drives"; subtitle = "Browse and apply to recruitment drives"; }
     else if (pathname.endsWith("/student/settings")) { activePage = "settings"; title = "Settings"; subtitle = "Platform configuration and preferences"; }
   } else {
     if (pathname.endsWith("/admin/dashboard")) { activePage = "admin-dashboard"; title = "Admin Dashboard"; subtitle = "Institutional insights and operational controls"; }
@@ -56,6 +57,7 @@ export function DashboardLayout({ allowedRole }: { allowedRole: "admin" | "stude
     else if (pathname.endsWith("/admin/departments")) { activePage = "departments"; title = "Departments"; subtitle = "Department-level performance and management"; }
     else if (pathname.endsWith("/admin/academic")) { activePage = "academic"; title = "Academic Analytics"; subtitle = "Academic performance and learning outcomes"; }
     else if (pathname.endsWith("/admin/placement")) { activePage = "placement"; title = "Placement Analytics"; subtitle = "Recruitment data and student placement readiness"; }
+    else if (pathname.endsWith("/admin/drives")) { activePage = "admin-drives"; title = "Drives & Apps"; subtitle = "Manage recruitment drives and applications"; }
     else if (pathname.endsWith("/admin/projects")) { activePage = "projects"; title = "Projects"; subtitle = "Institutional project tracking and outcomes"; }
     else if (pathname.endsWith("/admin/settings")) { activePage = "settings"; title = "Settings"; subtitle = "Platform configuration and preferences"; }
   }
@@ -75,6 +77,7 @@ export function DashboardLayout({ allowedRole }: { allowedRole: "admin" | "stude
       "planner": "/student/planner",
       "ai-mentor": "/student/ai-mentor",
       "placement-student": "/student/career-intelligence",
+      "student-drives": "/student/drives",
       "settings": "/student/settings",
     };
 
@@ -85,6 +88,7 @@ export function DashboardLayout({ allowedRole }: { allowedRole: "admin" | "stude
       "departments": "/admin/departments",
       "academic": "/admin/academic",
       "placement": "/admin/placement",
+      "admin-drives": "/admin/drives",
       "projects": "/admin/projects",
       "settings": "/admin/settings",
     };
