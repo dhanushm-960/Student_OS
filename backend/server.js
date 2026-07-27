@@ -7,7 +7,13 @@ import adminRoutes from "./routes/adminRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import phase5Routes from "./routes/phase5Routes.js";
 import plannerRoutes from "./routes/plannerRoutes.js";
+import recruitmentRoutes from "./routes/recruitmentRoutes.js";
 import { initMarketCron } from "./jobs/marketCron.js";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load environment variables
 dotenv.config();
@@ -39,6 +45,10 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api", phase5Routes);
 app.use("/api/student", plannerRoutes);
+app.use("/api", recruitmentRoutes);
+
+// Static uploads folder
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // 404 Route handler
 app.use((req, res, next) => {
