@@ -23,8 +23,8 @@ const upload = multer({ limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB limit, 
 
 // Student Routes
 router.post("/resume/upload", protect, upload.single("resume"), uploadResume);
-router.get("/companies/matches", protect, getRecruiterMatches);
-router.get("/match-history", protect, getMatchScoreHistory);
+router.get("/student/companies/matches", protect, getRecruiterMatches);
+router.get("/student/match-history", protect, getMatchScoreHistory);
 router.get("/student/ai-recommendations", protect, getAiRecommendations);
 router.post("/student/ai-mentor/chat", protect, aiMentorChat);
 router.get("/student/weekly-summary", protect, getWeeklySummary);

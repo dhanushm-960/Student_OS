@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { 
   Briefcase, TrendingUp, CheckCircle2, ClipboardList, ShieldCheck, 
-  Upload, FileText, Sparkles, Building2, Check, AlertCircle, ArrowUpRight
+  Upload, FileText, Sparkles, Building2, Check, AlertCircle, ArrowUpRight, Zap
 } from "lucide-react";
 import { apiRequest } from "../utils/api";
 
@@ -11,10 +11,10 @@ export function PlacementPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Upload State
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [expandedCompany, setExpandedCompany] = useState<string | null>(null);
   
   const fetchPlacementData = async () => {
     try {
@@ -111,7 +111,7 @@ export function PlacementPage() {
             </div>
             <TrendingUp size={20} className="text-indigo-600" />
           </div>
-          <p className="mt-4 text-xs text-slate-500">Based on GPA, DSA, Projects, and Resume Score.</p>
+          <p className="mt-4 text-xs text-slate-500">Based on GPA, Projects, and Resume Score.</p>
         </div>
 
         <div className="rounded-3xl bg-white p-6 shadow-sm shadow-slate-200 border border-slate-100">
@@ -153,8 +153,14 @@ export function PlacementPage() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg font-bold text-slate-900">AI Resume Analyzer</h3>
-                <p className="text-xs text-slate-400">Upload your PDF resume to parse stats and receive scores.</p>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-slate-900">AI Resume Analyzer</h3>
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded border border-orange-500/30 bg-orange-500/10 text-orange-600 text-[10px] font-bold tracking-wider">
+                    <Zap size={10} fill="currentColor" />
+                    POWERED BY GROQ
+                  </div>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">Upload your PDF resume to parse stats and receive scores.</p>
               </div>
               <Sparkles size={18} className="text-indigo-500" />
             </div>
@@ -202,23 +208,31 @@ export function PlacementPage() {
                 <div>
                   <h4 className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Extracted Skills</h4>
                   <div className="flex flex-wrap gap-1.5 mt-1.5">
-                    {resumeDetails.skills.map((s: string) => (
-                      <span key={s} className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">
-                        {s}
-                      </span>
-                    ))}
+                    {resumeDetails.skills && resumeDetails.skills.length > 0 ? (
+                      resumeDetails.skills.map((s: string) => (
+                        <span key={s} className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">
+                          {s}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xs text-slate-400 italic">No skills successfully extracted. Try uploading again!</span>
+                    )}
                   </div>
                 </div>
 
                 <div>
                   <h4 className="text-xs uppercase tracking-wider text-slate-400 font-semibold font-semibold">Resume Action Checklist</h4>
                   <ul className="mt-2 space-y-1.5">
-                    {resumeDetails.suggestions.map((s: string, idx: number) => (
-                      <li key={idx} className="text-xs text-slate-500 flex items-start gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
-                        {s}
-                      </li>
-                    ))}
+                    {resumeDetails.actionChecklist && resumeDetails.actionChecklist.length > 0 ? (
+                      resumeDetails.actionChecklist.map((s: string, idx: number) => (
+                        <li key={idx} className="text-xs text-slate-500 flex items-start gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
+                          {s}
+                        </li>
+                      ))
+                    ) : (
+                      <li className="text-xs text-slate-400 italic">No suggestions available</li>
+                    )}
                   </ul>
                 </div>
               </div>
@@ -289,57 +303,92 @@ export function PlacementPage() {
           {companies.length === 0 ? (
             <p className="text-sm text-slate-400 text-center py-6">No recruiters configured in database.</p>
           ) : (
-            companies.map((company) => (
               <div 
                 key={company.companyId} 
-                className={`rounded-2xl border p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-colors ${
-                  company.eligible ? "border-slate-100 bg-slate-50/50" : "border-rose-100 bg-rose-50/10"
+                className={`rounded-2xl border flex flex-col gap-4 transition-all cursor-pointer ${
+                  company.eligible ? "border-slate-100 bg-slate-50/50 hover:bg-slate-100/50" : "border-rose-100 bg-rose-50/10 hover:bg-rose-50/30"
                 }`}
+                onClick={() => setExpandedCompany(expandedCompany === company.companyId ? null : company.companyId)}
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white font-bold flex items-center justify-center shrink-0">
-                    {company.logo}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-semibold text-slate-900">{company.name}</h4>
-                      <span className={`text-[0.65rem] px-2 py-0.5 rounded-full font-bold ${
-                        company.type === "Super Dream" ? "bg-purple-100 text-purple-700" :
-                        company.type === "Dream" ? "bg-indigo-100 text-indigo-700" : "bg-slate-100 text-slate-600"
-                      }`}>
-                        {company.type}
-                      </span>
+                <div className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white font-bold flex items-center justify-center shrink-0">
+                      {company.logo}
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5">{company.role} · {company.salary}</p>
-                    <p className="text-[0.65rem] text-slate-400 mt-1">Min CGPA: {company.minGpa}</p>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-semibold text-slate-900">{company.name}</h4>
+                        <span className={`text-[0.65rem] px-2 py-0.5 rounded-full font-bold ${
+                          company.type === "Super Dream" ? "bg-purple-100 text-purple-700" :
+                          company.type === "Dream" ? "bg-indigo-100 text-indigo-700" : "bg-slate-100 text-slate-600"
+                        }`}>
+                          {company.type}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">{company.role} · {company.salary}</p>
+                      <p className="text-[0.65rem] text-slate-400 mt-1">Min CGPA: {company.minGpa}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between sm:justify-end gap-6 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
+                    <div className="text-left sm:text-right">
+                      <p className="text-xs text-slate-400 font-semibold">Match Score</p>
+                      <p className="text-lg font-bold text-indigo-600 mt-0.5">{company.matchScore}%</p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {company.eligible ? (
+                        <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold flex items-center gap-1">
+                          <Check size={12} /> Eligible
+                        </span>
+                      ) : (
+                        <span className="px-3 py-1 rounded-full bg-rose-100 text-rose-700 text-xs font-semibold flex items-center gap-1">
+                          <AlertCircle size={12} /> Ineligible
+                        </span>
+                      )}
+                      <div 
+                        className={`p-1.5 rounded-lg border border-slate-200 transition text-slate-500 flex items-center justify-center transform ${
+                          expandedCompany === company.companyId ? "bg-indigo-50 text-indigo-600 border-indigo-200 rotate-180" : "hover:bg-slate-50 hover:text-slate-800"
+                        }`}
+                      >
+                        <ArrowUpRight size={16} className={expandedCompany === company.companyId ? "hidden" : "block"} />
+                        <span className={expandedCompany === company.companyId ? "block text-xs" : "hidden"}>▲</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between sm:justify-end gap-6 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
-                  <div className="text-left sm:text-right">
-                    <p className="text-xs text-slate-400 font-semibold">Match Score</p>
-                    <p className="text-lg font-bold text-indigo-600 mt-0.5">{company.matchScore}%</p>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {company.eligible ? (
-                      <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold flex items-center gap-1">
-                        <Check size={12} /> Eligible
-                      </span>
-                    ) : (
-                      <span className="px-3 py-1 rounded-full bg-rose-100 text-rose-700 text-xs font-semibold flex items-center gap-1">
-                        <AlertCircle size={12} /> Ineligible
-                      </span>
+                
+                {expandedCompany === company.companyId && (
+                  <div className="px-4 pb-4 border-t border-slate-100 pt-4 flex flex-col gap-3">
+                    {company.majorFitTier === "atypical" && (
+                      <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 text-amber-600 text-sm border border-amber-500/20">
+                        <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                        <span>{company.majorFitNote}</span>
+                      </div>
                     )}
-                    <a 
-                      href="#" 
-                      onClick={(e) => e.preventDefault()} 
-                      className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition text-slate-500 hover:text-slate-800"
-                    >
-                      <ArrowUpRight size={16} />
-                    </a>
+                    {company.majorFitTier === "minor_match" && (
+                      <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-500/10 text-blue-600 text-sm border border-blue-500/20">
+                        <Check size={16} className="shrink-0 mt-0.5" />
+                        <span>{company.majorFitNote}</span>
+                      </div>
+                    )}
+                    {company.missingSkills && company.missingSkills.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-slate-500 mb-2">Missing Skills to Acquire:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {company.missingSkills.map((skill: string, idx: number) => (
+                            <span key={idx} className="px-2.5 py-1 rounded-md bg-rose-50 border border-rose-100 text-rose-600 text-xs font-medium">
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {(!company.missingSkills || company.missingSkills.length === 0) && (
+                      <div className="text-xs text-emerald-600 font-medium">You have all the required skills for this role!</div>
+                    )}
                   </div>
-                </div>
+                )}
               </div>
             ))
           )}
@@ -425,8 +474,8 @@ export function PlacementPage() {
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="p-4 rounded-2xl bg-indigo-50/30 border border-indigo-100/50 relative">
             <span className="text-xs font-bold text-indigo-600 bg-white px-2.5 py-0.5 border border-indigo-100 rounded-full">Phase 1</span>
-            <h4 className="font-bold text-sm text-slate-900 mt-3 mb-1.5">Core DSA Mastery</h4>
-            <p className="text-xs text-slate-500 leading-relaxed">Fulfill missing requirements on LeetCode trees, dynamic programming, and binary search graphs.</p>
+            <h4 className="font-bold text-sm text-slate-900 mt-3 mb-1.5">Core Domain Mastery</h4>
+            <p className="text-xs text-slate-500 leading-relaxed">Fulfill missing requirements on core concepts related to your major to ace technical rounds.</p>
           </div>
 
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/60 relative">

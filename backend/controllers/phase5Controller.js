@@ -19,7 +19,6 @@ const pdfParse = require('pdf-parse');
 // Helper: Deterministic placement predictor (NO AI)
 const predictPlacementForStudent = async (profile) => {
   const gpa = profile.gpa || 0;
-  const dsaProgress = profile.dsaProgress || 0;
   const projectsCount = profile.projectsCompleted || 0;
   const resumeScore = profile.resumeDetails?.score || 0;
 
@@ -66,7 +65,7 @@ const predictPlacementForStudent = async (profile) => {
   // Compute a weighted score out of 100
   const resScore = (resumeScore / 100) * 25;
   const matchScoreWeight = (avgMatchScore / 100) * 25;
-  const acadScore = ((gpa / 10) * 10) + ((dsaProgress / 100) * 10);
+  const acadScore = (gpa / 10) * 20;
   const projScore = Math.min(15, (projectsCount + projects) * 5);
   const certsCount = profile.resumeDetails?.certifications?.length || 0;
   const consistencyScore = Math.min(10, completedTasks * 0.5) + Math.min(5, certsCount * 2.5);
@@ -80,7 +79,7 @@ const predictPlacementForStudent = async (profile) => {
   const breakdown = [
     { label: "Resume Strength", value: Math.round((resScore/25)*100), max: 100, weight: "25%" },
     { label: "Recruiter Fit", value: Math.round((matchScoreWeight/25)*100), max: 100, weight: "25%" },
-    { label: "Academic & DSA", value: Math.round((acadScore/20)*100), max: 100, weight: "20%" },
+    { label: "Academic Performance", value: Math.round((acadScore/20)*100), max: 100, weight: "20%" },
     { label: "Projects", value: Math.round((projScore/15)*100), max: 100, weight: "15%" },
     { label: "Task Consistency", value: Math.round((consistencyScore/15)*100), max: 100, weight: "15%" }
   ];
@@ -88,7 +87,7 @@ const predictPlacementForStudent = async (profile) => {
   const recs = [];
   if (resScore < 15) recs.push("Improve your Resume format and extractable skills.");
   if (matchScoreWeight < 15) recs.push("Acquire skills required by top matching companies.");
-  if (acadScore < 10) recs.push("Work on CGPA and Data Structures.");
+  if (acadScore < 10) recs.push("Work on maintaining a higher CGPA.");
   if (projScore < 10) recs.push("Build more full-stack projects.");
   if (recs.length === 0) recs.push("Profile is strong! Focus on mock interviews.");
 
@@ -142,32 +141,19 @@ export const uploadResume = async (req, res, next) => {
       throw new Error("The uploaded document does not appear to be a valid resume. Please upload a real resume PDF.");
     }
 
-    // Call Gemini AI for extraction
+    // Call Groq AI for extraction
     const extractedData = await analyzeResume(pdfText, profile);
 
     const { technicalSkills, softSkills, programmingLanguages, frameworks, libraries, tools, databases, certifications, education, projects, experience, github, linkedin } = extractedData;
     const combinedSkills = [...new Set([...(technicalSkills||[]), ...(programmingLanguages||[]), ...(frameworks||[]), ...(tools||[]), ...(databases||[])])];
 
-    // Deterministic Resume Scoring
-    let score = 0;
-    if (combinedSkills.length > 5) score += 20;
-    else if (combinedSkills.length > 0) score += 10;
-    
-    if (projects && projects.length >= 2) score += 25;
-    else if (projects && projects.length === 1) score += 15;
+    // AI-driven Resume Scoring
+    let score = extractedData.score || 50;
+    let strength = extractedData.strength || "Needs Work";
 
-    if (experience && experience.length > 0) score += 20;
-    if (education && education.length > 5) score += 10;
-    if (github && github.length > 5) score += 15;
-    if (linkedin && linkedin.length > 5) score += 10;
-
-    score = Math.min(100, score);
-    let strength = "Needs Work";
-    if (score > 80) strength = "Strong";
-    else if (score > 60) strength = "Average";
-
-    // Call Gemini for Action Checklist
-    const actionChecklist = await generateActionChecklist(extractedData, { studentProfile: profile });
+    // Call Groq for Action Checklist
+    const actionChecklistData = await generateActionChecklist(extractedData, { studentProfile: profile });
+    const finalChecklist = Array.isArray(actionChecklistData) ? actionChecklistData : [];
 
     profile.resumeDetails = {
       isFallback: extractedData.isFallback || false,
@@ -187,7 +173,7 @@ export const uploadResume = async (req, res, next) => {
       experience,
       github,
       linkedin,
-      actionChecklist,
+      actionChecklist: finalChecklist,
       fileName,
       uploadedAt: new Date()
     };
@@ -264,7 +250,9 @@ export const getRecruiterMatches = async (req, res, next) => {
         eligibilityTier: matchData.eligibilityTier,
         matchedSkills: matchData.matchedSkills,
         missingSkills: matchData.missingSkills,
-        recommendation: matchData.recommendation
+        recommendation: matchData.recommendation,
+        majorFitTier: matchData.majorFitTier,
+        majorFitNote: matchData.majorFitNote
       };
     }).filter(Boolean); // Filter out suppressed companies
 
@@ -364,7 +352,7 @@ export const getCompanies = async (req, res, next) => {
 // @access  Private/Admin
 export const addCompany = async (req, res, next) => {
   try {
-    const { name, role, salary, type, minGpa, requiredSkills, preferredTech, logo } = req.body;
+    const { name, role, salary, type, minGpa, requiredSkills, preferredTech, logo, eligibleMajors, eligibleMinors } = req.body;
     if (!name || !role) {
       res.status(400);
       throw new Error("Company name and hiring role are required.");
@@ -378,7 +366,9 @@ export const addCompany = async (req, res, next) => {
       minGpa: Number(minGpa) || 0,
       requiredSkills: Array.isArray(requiredSkills) ? requiredSkills : (requiredSkills || "").split(",").map(s => s.trim()).filter(Boolean),
       preferredTech: Array.isArray(preferredTech) ? preferredTech : (preferredTech || "").split(",").map(t => t.trim()).filter(Boolean),
-      logo: logo || "🏢"
+      logo: logo || "🏢",
+      eligibleMajors: eligibleMajors && eligibleMajors.length > 0 ? (Array.isArray(eligibleMajors) ? eligibleMajors : eligibleMajors.split(",").map(m => m.trim()).filter(Boolean)) : ["ALL"],
+      eligibleMinors: eligibleMinors && eligibleMinors.length > 0 ? (Array.isArray(eligibleMinors) ? eligibleMinors : eligibleMinors.split(",").map(m => m.trim()).filter(Boolean)) : []
     });
 
     // An empty company object as "oldCompany" to force a match score diff (simulating going from 0 score to new score)

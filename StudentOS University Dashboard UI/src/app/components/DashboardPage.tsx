@@ -10,6 +10,8 @@ import {
   FolderGit2, Award, Building2, ChevronRight
 } from "lucide-react";
 import { apiRequest } from "../utils/api";
+import { MultiSelect } from "./MultiSelect";
+import { MAJORS } from "../constants/careerGoals";
 
 /* ─── Color tokens ─── */
 const C = {
@@ -307,8 +309,8 @@ function StudentSuccessCharts({ monthlyData, goalData, productivityData }: { mon
 }
 
 /* ─── Section 3: Placement Analytics ─── */
-function PlacementSection({ placementStats, dsaData }: { placementStats?: any; dsaData?: any[] }) {
-  if (!placementStats || !dsaData) return null;
+function PlacementSection({ placementStats }: { placementStats?: any }) {
+  if (!placementStats) return null;
 
   const stats = [
     { label: "Placement Ready", value: placementStats.placementReady || "0", pct: 78, color: C.indigo },
@@ -344,26 +346,11 @@ function PlacementSection({ placementStats, dsaData }: { placementStats?: any; d
           ))}
         </Card>
 
-        <Card>
-          <div className="text-sm font-600 mb-1" style={{ color: "var(--foreground)" }}>
-            DSA Progress Distribution
+        <Card className="flex flex-col justify-center">
+          <div className="bg-white rounded-2xl p-6 border border-slate-100/60 shadow-sm flex flex-col justify-center items-center text-center">
+            <h3 className="text-slate-400 font-medium text-sm mb-2">More Insights Coming Soon</h3>
+            <p className="text-slate-600 text-sm">Stay tuned for new placement analytics.</p>
           </div>
-          <div className="text-xs mb-3" style={{ color: "var(--muted-foreground)" }}>
-            By proficiency level
-          </div>
-          <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={dsaData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(79,70,229,0.06)" />
-              <XAxis dataKey="level" tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} />
-              <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                {dsaData.map((_, i) => (
-                  <Cell key={`dsa-cell-${i}`} fill={[C.indigo, C.purple, C.cyan, C.green][i % 4]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
         </Card>
 
         <Card style={{ background: "linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)", border: "none" }}>
@@ -643,7 +630,7 @@ function SkillDevelopment({ skillData, heatmapData }: { skillData?: any[]; heatm
                   <th className="text-left pb-2 pr-2 font-500" style={{ color: "var(--muted-foreground)" }}>
                     Dept
                   </th>
-                  {["DSA", "FS", "ML", "Apt"].map((h) => (
+                  {["FS", "ML", "Apt"].map((h) => (
                     <th key={h} className="text-center pb-2 px-1 font-500" style={{ color: "var(--muted-foreground)" }}>
                       {h}
                     </th>
@@ -656,7 +643,7 @@ function SkillDevelopment({ skillData, heatmapData }: { skillData?: any[]; heatm
                     <td className="pr-2 py-1 font-500" style={{ color: "var(--foreground)" }}>
                       {row.dept}
                     </td>
-                    {[row.dsa, row.fullstack, row.ml, row.aptitude].map((val, i) => {
+                    {[row.fullstack, row.ml, row.aptitude].map((val, i) => {
                       const colors = heatColor(val);
                       return (
                         <td key={i} className="px-1 py-1 text-center">
@@ -807,10 +794,12 @@ function PlacementDashboard({ companyData, topRecruiters }: { companyData?: any[
   const [compRole, setCompRole] = useState("");
   const [compSalary, setCompSalary] = useState("₹8L");
   const [compType, setCompType] = useState("Dream");
-  const [compMinGpa, setCompMinGpa] = useState("7.5");
-  const [compSkills, setCompSkills] = useState("React, Node.js");
-  const [compTech, setCompTech] = useState("Git, Docker");
-  const [compLogo, setCompLogo] = useState("🏢");
+  const [compMinGpa, setCompMinGpa] = useState("0");
+  const [compSkills, setCompSkills] = useState("");
+  const [compTech, setCompTech] = useState("");
+  const [compLogo, setCompLogo] = useState("");
+  const [compEligibleMajors, setCompEligibleMajors] = useState<string[]>(["ALL"]);
+  const [compEligibleMinors, setCompEligibleMinors] = useState<string[]>([]);
   const [formSuccess, setFormSuccess] = useState(false);
 
   const fetchPhase5AdminData = async () => {
@@ -847,16 +836,24 @@ function PlacementDashboard({ companyData, topRecruiters }: { companyData?: any[
           role: compRole,
           salary: compSalary,
           type: compType,
-          minGpa: Number(compMinGpa),
-          requiredSkills: compSkills,
-          preferredTech: compTech,
-          logo: compLogo
+          minGpa: parseFloat(compMinGpa),
+          requiredSkills: compSkills.split(",").map(s => s.trim()).filter(Boolean),
+          preferredTech: compTech.split(",").map(s => s.trim()).filter(Boolean),
+          logo: compLogo,
+          eligibleMajors: compEligibleMajors,
+          eligibleMinors: compEligibleMinors
         })
       });
       if (res.success) {
-        setFormSuccess(true);
         setCompName("");
         setCompRole("");
+        setCompMinGpa("0");
+        setCompSkills("");
+        setCompTech("");
+        setCompLogo("");
+        setCompEligibleMajors(["ALL"]);
+        setCompEligibleMinors([]);
+        setFormSuccess(true);
         await fetchPhase5AdminData();
         setTimeout(() => setFormSuccess(false), 3000);
       }
@@ -1030,6 +1027,35 @@ function PlacementDashboard({ companyData, topRecruiters }: { companyData?: any[
               </div>
               <input type="text" placeholder="Required Skills (comma separated)" value={compSkills} onChange={e => setCompSkills(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm" />
               <input type="text" placeholder="Preferred Tech (comma separated)" value={compTech} onChange={e => setCompTech(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm" />
+              
+              <div className="z-40 relative">
+                <label className="block text-sm text-slate-600 mb-1.5 font-medium">Eligible Majors</label>
+                <MultiSelect 
+                  options={[
+                    { label: "Open to All Majors", value: "ALL" },
+                    ...MAJORS.map(m => ({ label: m, value: m }))
+                  ]}
+                  selectedValues={compEligibleMajors}
+                  onChange={setCompEligibleMajors}
+                  placeholder="Select Eligible Majors..."
+                />
+              </div>
+
+              <div className="z-30 relative">
+                <label className="block text-sm text-slate-600 mb-1.5 font-medium">Eligible Minors</label>
+                <MultiSelect 
+                  options={[
+                    { label: "AI", value: "AI" },
+                    { label: "Data Science", value: "Data Science" },
+                    { label: "IoT", value: "IoT" },
+                    { label: "Cybersecurity & Blockchain", value: "Cybersecurity & Blockchain" }
+                  ]}
+                  selectedValues={compEligibleMinors}
+                  onChange={setCompEligibleMinors}
+                  placeholder="Select Minors (Optional)"
+                />
+              </div>
+
               <button type="submit" className="w-full py-2 bg-indigo-600 text-white font-semibold rounded-lg text-sm hover:bg-indigo-700 transition">Save Company</button>
               {formSuccess && <p className="text-xs text-emerald-600 text-center">Company requirements added successfully!</p>}
             </form>
@@ -1302,7 +1328,7 @@ export function DashboardPage({ section, onNavigate }: { section?: string; onNav
         productivityData={stats.productivityData} 
       />
       <div className="h-6" />
-      <PlacementSection placementStats={stats.placementStats} dsaData={stats.dsaData} />
+      <PlacementSection placementStats={stats.placementStats} />
       <div className="h-6" />
       <DepartmentPerformance deptData={stats.deptData} rankedDepts={stats.rankedDepts} />
       <div className="h-6" />

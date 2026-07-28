@@ -43,7 +43,6 @@ export const registerUser = async (req, res, next) => {
           year: 1,
           gpa: 0,
           attendance: 0,
-          dsaProgress: 0,
           projectsCompleted: 0,
           placementReadiness: 0,
           goalProgress: 0,
@@ -202,7 +201,6 @@ export const googleSignIn = async (req, res, next) => {
         year: 1,
         gpa: 0,
         attendance: 0,
-        dsaProgress: 0,
         projectsCompleted: 0,
         placementReadiness: 0,
         goalProgress: 0,
@@ -243,5 +241,46 @@ export const googleSignIn = async (req, res, next) => {
   } catch (error) {
     res.status(401);
     next(new Error("Invalid Google token or authentication failed."));
+  }
+};
+
+// @desc    Change password
+// @route   POST /api/auth/change-password
+// @access  Private
+export const changePassword = async (req, res, next) => {
+  const { currentPassword, newPassword } = req.body;
+
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found.");
+    }
+
+    if (user.authProvider !== "local") {
+      res.status(400);
+      throw new Error("Cannot change password for non-local accounts.");
+    }
+
+    if (!(await user.comparePassword(currentPassword))) {
+      res.status(401);
+      throw new Error("Current password is incorrect.");
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      res.status(400);
+      throw new Error("New password must be at least 6 characters.");
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Password changed successfully."
+    });
+  } catch (error) {
+    next(error);
   }
 };

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { 
   CheckCircle2, Clock3, Sparkles, Plus, Trash2, 
-  Check, AlertCircle, Calendar, ChevronLeft, ChevronRight, ListTodo
+  Check, AlertCircle, Calendar, ChevronLeft, ChevronRight, ListTodo, Flame
 } from "lucide-react";
 import { apiRequest } from "../utils/api";
 
@@ -27,7 +27,9 @@ export function PlannerPage() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [history, setHistory] = useState<any>(null);
+  const [studyStreak, setStudyStreak] = useState<any>({ currentStreak: 0, longestStreak: 0, totalDaysCompleted: 0 });
   const [loading, setLoading] = useState(true);
+  const [generatingAI, setGeneratingAI] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Week navigation state
@@ -64,6 +66,7 @@ export function PlannerPage() {
         setTasks(res.tasks);
         setEvents(res.events);
         setHistory(res.planHistory);
+        if (res.studyStreak) setStudyStreak(res.studyStreak);
       }
     } catch (err: any) {
       setError(err.message || "Failed to load planner data.");
@@ -131,8 +134,8 @@ export function PlannerPage() {
   };
 
   // Grid layout parameters
-  const START_HOUR = 8;
-  const END_HOUR = 21;
+  const START_HOUR = 6;
+  const END_HOUR = 23;
   const hours = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i);
 
   // Week days calculation
@@ -200,26 +203,55 @@ export function PlannerPage() {
     }
   };
 
+  const handleGenerateAISchedule = async () => {
+    try {
+      setGeneratingAI(true);
+      setError(null);
+      
+      const targetDate = new Date(currentWeekStart);
+      const dayOffset = (new Date().getDay() || 7) - (currentWeekStart.getDay() || 7); 
+      // simple hack to aim for 'today' relative to view or just use real today:
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      const res = await apiRequest("/api/student/planner/generate-daily", {
+        method: "POST",
+        body: JSON.stringify({ targetDate: today.toISOString() })
+      });
+      if (res.success) {
+        await fetchPlannerData();
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to generate AI schedule. Ensure your settings have Availability configured.");
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
+
   // Merge calendar events & tasks for single source of truth in schedule grid
   const calendarItems = [
     ...tasks.map(t => ({
       id: t._id,
       title: t.title,
+      description: t.description || "",
       category: t.category,
       dueDate: new Date(t.dueDate),
       duration: t.estimatedDurationMinutes || 60,
       status: t.status,
       priority: t.priority,
+      source: t.source,
       isTask: true
     })),
     ...events.filter(e => !e.linkedId).map(e => ({
       id: e._id,
       title: e.title,
+      description: e.description || "",
       category: e.category,
       dueDate: new Date(e.dueDate),
       duration: e.durationMinutes || 60,
       status: e.status,
       priority: e.priority,
+      source: e.source,
       isTask: false
     }))
   ];
@@ -272,12 +304,48 @@ export function PlannerPage() {
               <ChevronRight size={16} />
             </button>
           </div>
+          
+          <button 
+            onClick={handleGenerateAISchedule}
+            disabled={generatingAI}
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs text-white transition hover:bg-slate-800 font-bold shadow-md disabled:opacity-50 cursor-pointer"
+          >
+            <Sparkles size={14} className={generatingAI ? "animate-pulse" : ""} /> 
+            {generatingAI ? "Generating..." : "AI Schedule Today"}
+          </button>
+
           <button 
             onClick={() => setShowAddForm(!showAddForm)}
             className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs text-white transition hover:bg-indigo-700 font-bold shadow-md shadow-indigo-600/10 cursor-pointer"
           >
             <Plus size={14} /> New Task
           </button>
+        </div>
+      </div>
+
+      {/* Gamification Streak Tracker */}
+      <div className="flex items-center justify-between rounded-3xl bg-gradient-to-r from-orange-50 to-rose-50 p-6 border border-orange-100 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className={`p-3 rounded-2xl flex items-center justify-center ${studyStreak.currentStreak > 0 ? "bg-orange-500 shadow-lg shadow-orange-500/30 text-white animate-bounce" : "bg-slate-200 text-slate-400"}`}>
+            <Flame size={28} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">Study Streak</h3>
+            <p className="text-xs font-semibold text-slate-500 mt-0.5">
+              {studyStreak.currentStreak > 0 ? `You're on a ${studyStreak.currentStreak} day streak! Keep it up!` : "Complete today's tasks to start your streak!"}
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-6">
+          <div className="text-right hidden sm:block">
+            <p className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Longest Streak</p>
+            <p className="text-lg font-black text-slate-800">{studyStreak.longestStreak} <span className="text-sm font-semibold text-slate-500">days</span></p>
+          </div>
+          <div className="text-right hidden sm:block">
+            <p className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Total Days</p>
+            <p className="text-lg font-black text-slate-800">{studyStreak.totalDaysCompleted}</p>
+          </div>
         </div>
       </div>
 
@@ -400,7 +468,7 @@ export function PlannerPage() {
                 {weekDays.map((dayDate, colIdx) => {
                   // Filter items scheduled for this day
                   const dayItems = calendarItems.filter(item => {
-                    return item.dueDate.toDateString() === dayDate.toDateString();
+                    return item.dueDate.toDateString() === dayDate.toDateString() && item.status !== "Completed";
                   });
 
                   return (
@@ -433,18 +501,24 @@ export function PlannerPage() {
                         return (
                           <div 
                             key={item.id || itemIdx}
-                            className={`absolute left-[2%] w-[96%] rounded-xl p-2 border ${colors.bg} ${colors.border} shadow-sm overflow-hidden flex flex-col justify-between group transition-all duration-300 ease-out hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.02] z-10 hover:z-20`}
+                            className={`absolute left-[2%] w-[96%] rounded-xl p-2 border ${colors.bg} ${colors.border} shadow-sm overflow-hidden flex flex-col justify-between group transition-all duration-300 ease-out hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.02] z-10 hover:z-20 hover:h-auto hover:min-h-fit`}
                             style={{ 
                               top: `${topOffset}px`, 
-                              height: `${heightSize}px`,
+                              minHeight: `${heightSize}px`,
+                              maxHeight: `150px`,
                               zIndex: 10
                             }}
                           >
                             <div className="overflow-hidden">
                               <div className="flex items-center justify-between gap-1">
-                                <span className={`truncate min-w-0 text-[9px] uppercase font-bold tracking-wider opacity-75 ${colors.text}`}>
-                                  {item.category}
-                                </span>
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <span className={`truncate text-[9px] uppercase font-bold tracking-wider opacity-75 ${colors.text}`}>
+                                    {item.category}
+                                  </span>
+                                  {item.source === "ai_generated" && (
+                                    <Sparkles size={10} className="text-indigo-500 shrink-0" title="AI Generated Schedule" />
+                                  )}
+                                </div>
                                 {item.isTask && (
                                   <button 
                                     onClick={(e) => {
@@ -459,16 +533,35 @@ export function PlannerPage() {
                                   </button>
                                 )}
                               </div>
-                              <h4 className={`text-[10px] font-bold leading-tight mt-0.5 ${
-                                item.status === "Completed" ? "line-through text-slate-400" : colors.text
-                              }`}>
-                                {item.title}
-                              </h4>
-                            </div>
+                                <h4 className={`text-[10px] font-bold leading-tight mt-0.5 ${
+                                  item.status === "Completed" ? "line-through text-slate-400" : colors.text
+                                }`}>
+                                  {item.title}
+                                </h4>
+                                {item.description && (
+                                  <p className={`text-[9px] mt-0.5 line-clamp-2 group-hover:line-clamp-none ${item.status === "Completed" ? "text-slate-400" : "text-slate-600"} opacity-90 leading-tight`}>
+                                    {item.description}
+                                  </p>
+                                )}
+                              </div>
                             
                             {/* Card Hover Details */}
                             {heightSize >= 50 && (
-                              <div className="flex items-center justify-between text-[8px] text-slate-400 mt-1 border-t border-slate-100/50 pt-1 group-hover:block hidden">
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity mt-2">
+                                <span className={`text-[9px] font-bold uppercase tracking-wider ${colors.text} opacity-60`}>
+                                  {item.duration} mins • {item.priority}
+                                </span>
+                              </div>
+                            )}
+                            {heightSize < 50 && (
+                              <div className="hidden group-hover:block transition-opacity mt-2">
+                                <span className={`text-[9px] font-bold uppercase tracking-wider ${colors.text} opacity-60`}>
+                                  {item.duration} mins • {item.priority}
+                                </span>
+                              </div>
+                            )}
+                            {/* Card Footer */}
+                            <div className="flex items-center justify-between text-[8px] text-slate-400 mt-2 border-t border-slate-100/50 pt-1 group-hover:block hidden">
                                 <span>{item.duration}m</span>
                                 {item.isTask && (
                                   <button 
@@ -482,7 +575,6 @@ export function PlannerPage() {
                                   </button>
                                 )}
                               </div>
-                            )}
                           </div>
                         );
                       })}

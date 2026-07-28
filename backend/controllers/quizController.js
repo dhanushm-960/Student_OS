@@ -20,7 +20,7 @@ export const generateQuiz = async (req, res, next) => {
     // Take top 5 skills
     const skillsToTest = profile.resumeDetails.skills.slice(0, 5);
     
-    // Generate quiz using Gemini
+    // Generate quiz using Groq
     const quizData = await generateSkillQuiz(skillsToTest);
     
     if (!quizData || !quizData.questions) {

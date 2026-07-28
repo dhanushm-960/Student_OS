@@ -13,11 +13,7 @@ const studentProfileSchema = new mongoose.Schema(
       sparse: true,
       trim: true,
     },
-    department: {
-      type: String,
-      required: false,
-      enum: ["CSE", "IT", "Electronics", "Mechanical", "Civil"],
-    },
+
     year: {
       type: Number,
       required: false,
@@ -39,13 +35,7 @@ const studentProfileSchema = new mongoose.Schema(
       max: 100,
       default: 0,
     },
-    dsaProgress: {
-      type: Number,
-      required: false,
-      min: 0,
-      max: 100,
-      default: 0,
-    },
+
     projectsCompleted: {
       type: Number,
       required: false,
@@ -74,6 +64,13 @@ const studentProfileSchema = new mongoose.Schema(
     },
     careerGoal: {
       type: String,
+      enum: [
+        "AI/ML Engineer", "Software Engineer", "Data Scientist", "Research Engineer", "Product Engineer (AI)",
+        "Data Analyst", "Data Engineer", "Business Analyst",
+        "IoT Engineer", "Embedded Systems Engineer", "Hardware/Firmware Engineer", "Systems Engineer",
+        "Cybersecurity Analyst", "Security Engineer", "Blockchain Developer", "Cloud Security Engineer",
+        ""
+      ],
       default: "",
     },
     skills: {
@@ -108,7 +105,8 @@ const studentProfileSchema = new mongoose.Schema(
     },
     degree: {
       type: String,
-      default: "B.Tech Computer Science",
+      enum: ["B.Tech", "BS", ""],
+      default: "",
     },
     phone: {
       type: String,
@@ -120,6 +118,12 @@ const studentProfileSchema = new mongoose.Schema(
     },
     major: {
       type: String,
+      enum: ["Digital Transformation", "Life Science", "Energy Science", "E-mobility", ""],
+      default: "",
+    },
+    minor: {
+      type: String,
+      enum: ["AI", "Data Science", "IoT", "Cybersecurity & Blockchain", ""],
       default: "",
     },
     completedCredits: {
@@ -189,9 +193,20 @@ const studentProfileSchema = new mongoose.Schema(
       type: String,
       default: "Visual / Project-oriented",
     },
-    availableStudyHours: {
-      type: Number,
-      default: 4, // daily study hours
+    studyAvailability: {
+      dailyHours: { type: Number, default: 4 },
+      timeWindows: [
+        {
+          startTime: { type: String, default: "18:00" },
+          endTime: { type: String, default: "22:00" },
+        }
+      ]
+    },
+    studyStreak: {
+      currentStreak: { type: Number, default: 0 },
+      longestStreak: { type: Number, default: 0 },
+      lastCompletedDate: { type: Date },
+      totalDaysCompleted: { type: Number, default: 0 },
     },
     marketIntelligence: {
       missingSkills: { type: [String], default: [] },
