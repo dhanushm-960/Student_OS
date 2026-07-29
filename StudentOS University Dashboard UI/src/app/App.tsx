@@ -23,6 +23,7 @@ import { DashboardPage } from "./components/DashboardPage";
 import { StudentsPage } from "./components/StudentsPage";
 import { ReportsPage } from "./components/ReportsPage";
 import { PlaceholderPage } from "./components/PlaceholderPage";
+import { SettingsPage } from "./components/SettingsPage";
 import { StudentDrivesPage } from "./components/StudentDrivesPage";
 import { AdminDrivesPage } from "./components/AdminDrivesPage";
 
@@ -73,7 +74,7 @@ function AppRoutes() {
         <Route path="/student/ai-mentor" element={<AIMentorPage />} />
         <Route path="/student/career-intelligence" element={<CareerIntelligencePage />} />
         <Route path="/student/drives" element={<StudentDrivesPage />} />
-        <Route path="/student/settings" element={<PlaceholderPage title="Settings" />} />
+        <Route path="/student/settings" element={<SettingsPage />} />
       </Route>
 
       {/* Admin Protected Routes */}

@@ -23,10 +23,10 @@ export function StudentDrivesPage() {
   const fetchData = async () => {
     try {
       const [drivesRes, appsRes] = await Promise.all([
-        fetch("http://localhost:5000/api/student/drives", {
+        fetch("${import.meta.env.VITE_API_URL}/api/student/drives", {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        fetch("http://localhost:5000/api/student/applications", {
+        fetch("${import.meta.env.VITE_API_URL}/api/student/applications", {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -44,7 +44,7 @@ export function StudentDrivesPage() {
 
   const handleApply = async (driveId: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/student/drives/${driveId}/apply`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/student/drives/${driveId}/apply`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -69,7 +69,7 @@ export function StudentDrivesPage() {
     formData.append("stage", stage);
 
     try {
-      const res = await fetch(`http://localhost:5000/api/student/applications/${appId}/proof`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/student/applications/${appId}/proof`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData
@@ -149,23 +149,32 @@ export function StudentDrivesPage() {
                     <span>Deadline: {format(new Date(drive.deadline), "MMM dd, yyyy")}</span>
                   </div>
 
-                  {!drive.isEligible ? (
-                    <div className="mt-auto flex items-start gap-2 p-3 rounded-lg bg-red-500/10 text-red-400 text-sm border border-red-500/20">
-                      <AlertCircle size={16} className="shrink-0 mt-0.5" />
-                      <span>{drive.ineligibilityReason}</span>
-                    </div>
-                  ) : hasApplied ? (
-                    <div className="mt-auto w-full py-2.5 rounded-xl bg-green-500/10 text-green-500 font-500 text-sm text-center flex justify-center items-center gap-2 border border-green-500/20">
-                      <CheckCircle2 size={16} /> Applied
-                    </div>
-                  ) : (
-                    <button 
-                      onClick={() => handleApply(drive._id)}
-                      className="mt-auto w-full py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-500 text-sm transition-colors"
-                    >
-                      Apply Now
-                    </button>
-                  )}
+                  <div className="mt-auto flex flex-col gap-3">
+                    {drive.majorFitTier === "atypical" && (
+                      <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 text-amber-600 text-sm border border-amber-500/20">
+                        <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                        <span>{drive.majorFitNote}</span>
+                      </div>
+                    )}
+
+                    {!drive.isEligible ? (
+                      <div className="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 text-red-500 text-sm border border-red-500/20">
+                        <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                        <span>{drive.ineligibilityReason}</span>
+                      </div>
+                    ) : hasApplied ? (
+                      <div className="w-full py-2.5 rounded-xl bg-green-500/10 text-green-600 font-500 text-sm text-center flex justify-center items-center gap-2 border border-green-500/20">
+                        <CheckCircle2 size={16} /> Applied
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => handleApply(drive._id)}
+                        className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-500 text-sm transition-colors"
+                      >
+                        Apply Now
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -209,7 +218,7 @@ export function StudentDrivesPage() {
                             <span className="text-xs text-slate-500 mr-2">
                               Uploaded {format(new Date(existingProof.uploadedAt), "MMM dd")}
                             </span>
-                            <a href={`http://localhost:5000${existingProof.fileUrl}`} target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 text-sm font-500">
+                            <a href={`${import.meta.env.VITE_API_URL}${existingProof.fileUrl}`} target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 text-sm font-500">
                               View Image
                             </a>
                           </div>

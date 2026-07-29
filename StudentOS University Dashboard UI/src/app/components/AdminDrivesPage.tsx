@@ -3,6 +3,8 @@ import { format } from "date-fns";
 import { Plus, Users, Search, Building2, Image as ImageIcon, Calendar } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { TopNav } from "./TopNav";
+import { MultiSelect } from "./MultiSelect";
+import { MAJORS } from "../constants/careerGoals";
 
 export function AdminDrivesPage() {
   const token = localStorage.getItem("studentos_token");
@@ -12,7 +14,8 @@ export function AdminDrivesPage() {
   
   // Create Drive state
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newDrive, setNewDrive] = useState({ companyId: "", roleTitle: "", description: "", deadline: "" });
+  const [newDrive, setNewDrive] = useState<{ companyId: string; roleTitle: string; description: string; deadline: string; eligibleMajors: string[], eligibleMinors: string[] }>({ companyId: "", roleTitle: "", description: "", deadline: "", eligibleMajors: ["ALL"], eligibleMinors: [] });
+  const [selectedCompanyName, setSelectedCompanyName] = useState<string>("");
   
   // Applications view state
   const [selectedDrive, setSelectedDrive] = useState<any | null>(null);
@@ -26,7 +29,7 @@ export function AdminDrivesPage() {
 
   const fetchDrives = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/admin/drives", {
+      const res = await fetch("${import.meta.env.VITE_API_URL}/api/admin/drives", {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -40,7 +43,7 @@ export function AdminDrivesPage() {
 
   const fetchCompanies = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/admin/companies", {
+      const res = await fetch("${import.meta.env.VITE_API_URL}/api/admin/companies", {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -53,7 +56,7 @@ export function AdminDrivesPage() {
   const handleCreateDrive = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/api/admin/drives", {
+      const res = await fetch("${import.meta.env.VITE_API_URL}/api/admin/drives", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -64,7 +67,8 @@ export function AdminDrivesPage() {
       const data = await res.json();
       if (data.success) {
         setShowCreateModal(false);
-        setNewDrive({ companyId: "", roleTitle: "", description: "", deadline: "" });
+        setNewDrive({ companyId: "", roleTitle: "", description: "", deadline: "", eligibleMajors: ["ALL"], eligibleMinors: [] });
+        setSelectedCompanyName("");
         fetchDrives();
       } else {
         alert(data.message || "Failed to create drive");
@@ -77,7 +81,7 @@ export function AdminDrivesPage() {
 
   const fetchApplications = async (driveId: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/drives/${driveId}/applications`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/drives/${driveId}/applications`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -89,7 +93,7 @@ export function AdminDrivesPage() {
 
   const handleUpdateStatus = async (appId: string, status: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/applications/${appId}/status`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/applications/${appId}/status`, {
         method: "PUT",
         headers: { 
           "Content-Type": "application/json",
@@ -213,7 +217,7 @@ export function AdminDrivesPage() {
                               return (
                                 <button 
                                   key={stage}
-                                  onClick={() => setViewProofUrl(`http://localhost:5000${proof.fileUrl}`)}
+                                  onClick={() => setViewProofUrl(`${import.meta.env.VITE_API_URL}${proof.fileUrl}`)}
                                   className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center hover:bg-indigo-500/20"
                                   title={`View ${stage} proof`}
                                 >
@@ -250,27 +254,49 @@ export function AdminDrivesPage() {
                 <label className="block text-sm text-slate-600 mb-1.5">Company</label>
                 <select 
                   required
-                  value={newDrive.companyId}
-                  onChange={(e) => setNewDrive({...newDrive, companyId: e.target.value})}
+                  value={selectedCompanyName}
+                  onChange={(e) => {
+                    setSelectedCompanyName(e.target.value);
+                    setNewDrive({ ...newDrive, companyId: "", roleTitle: "", description: "", eligibleMajors: ["ALL"], eligibleMinors: [] });
+                  }}
                   className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                 >
                   <option value="">Select a company</option>
-                  {companies.map(c => (
-                    <option key={c._id} value={c._id}>{c.name}</option>
+                  {Array.from(new Set(companies.map(c => c.name))).map((name, idx) => (
+                    <option key={idx} value={name as string}>{name as string}</option>
                   ))}
                 </select>
               </div>
               
               <div>
                 <label className="block text-sm text-slate-600 mb-1.5">Role Title</label>
-                <input 
+                <select 
                   required
-                  type="text"
-                  value={newDrive.roleTitle}
-                  onChange={(e) => setNewDrive({...newDrive, roleTitle: e.target.value})}
+                  value={newDrive.companyId}
+                  onChange={(e) => {
+                    const compId = e.target.value;
+                    const comp = companies.find(c => c._id === compId);
+                    if (comp) {
+                      setNewDrive({
+                        ...newDrive,
+                        companyId: compId,
+                        roleTitle: comp.role,
+                        description: `Required Skills: ${(comp.requiredSkills || []).join(", ")}\nPreferred Tech: ${(comp.preferredTech || []).join(", ")}`,
+                        eligibleMajors: comp.eligibleMajors || ["ALL"],
+                        eligibleMinors: comp.eligibleMinors || []
+                      });
+                    } else {
+                      setNewDrive({ ...newDrive, companyId: compId, roleTitle: "", description: "", eligibleMajors: ["ALL"], eligibleMinors: [] });
+                    }
+                  }}
                   className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                  placeholder="e.g. Frontend Engineer"
-                />
+                  disabled={!selectedCompanyName}
+                >
+                  <option value="">Select a role</option>
+                  {companies.filter(c => c.name === selectedCompanyName).map(c => (
+                    <option key={c._id} value={c._id}>{c.role}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -293,6 +319,31 @@ export function AdminDrivesPage() {
                   value={newDrive.deadline}
                   onChange={(e) => setNewDrive({...newDrive, deadline: e.target.value})}
                   className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="z-50 relative">
+                <label className="block text-sm text-slate-600 mb-1.5">Eligible Majors</label>
+                <MultiSelect 
+                  options={[
+                    { label: "Open to All Majors", value: "ALL" },
+                    ...MAJORS.map(m => ({ label: m, value: m }))
+                  ]}
+                  selectedValues={newDrive.eligibleMajors}
+                  onChange={(vals) => setNewDrive({...newDrive, eligibleMajors: vals})}
+                  placeholder="Select Eligible Majors..."
+                />
+              </div>
+
+              <div className="z-40 relative">
+                <label className="block text-sm text-slate-600 mb-1.5">Eligible Minors</label>
+                <MultiSelect 
+                  options={[
+                    "AI", "Data Science", "IoT", "Cybersecurity & Blockchain"
+                  ].map(m => ({ label: m, value: m }))}
+                  selectedValues={newDrive.eligibleMinors}
+                  onChange={(vals) => setNewDrive({...newDrive, eligibleMinors: vals})}
+                  placeholder="Select Minors (Optional)"
                 />
               </div>
 

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Karthik Rajan - Resume</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Arial', sans-serif; font-size: 11px; color: #222; padding: 32px; line-height: 1.5; }
+  h1 { font-size: 22px; font-weight: 700; letter-spacing: 1px; }
+  .subtitle { font-size: 12px; color: #555; margin-top: 2px; }
+  .contact { font-size: 10px; color: #444; margin-top: 4px; }
+  hr { border: none; border-top: 2px solid #333; margin: 10px 0; }
+  .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #111; border-bottom: 1px solid #ccc; padding-bottom: 3px; margin: 14px 0 8px; }
+  .item-title { font-weight: 700; font-size: 11px; }
+  .item-subtitle { font-style: italic; color: #555; font-size: 10px; }
+  .item-date { float: right; color: #555; font-size: 10px; }
+  ul { margin-left: 18px; }
+  ul li { margin-bottom: 3px; }
+  .skills-grid { display: flex; gap: 24px; flex-wrap: wrap; }
+  .skill-cat { flex: 1; min-width: 140px; }
+  .skill-cat strong { display: block; margin-bottom: 4px; font-size: 10px; text-transform: uppercase; color: #555; letter-spacing: 0.5px; }
+  @media print { body { padding: 20px; } }
+</style>
+</head>
+<body>
+
+<h1>KARTHIK RAJAN</h1>
+<div class="subtitle">DevOps Engineer | Cloud Infrastructure</div>
+<div class="contact">karthik.rajan@email.com · +91 90012 34567 · github.com/karthikrajan · linkedin.com/in/karthikrajan · Mumbai, India</div>
+<hr>
+
+<div class="section-title">Education</div>
+<div>
+  <span class="item-title">B.Tech in Computer Science</span><span class="item-date">Aug 2021 – May 2025</span><br>
+  <span class="item-subtitle">VJTI Mumbai — CGPA: 8.3/10</span>
+</div>
+
+<div class="section-title">Technical Skills</div>
+<div class="skills-grid">
+  <div class="skill-cat"><strong>Cloud</strong>AWS (EC2, S3, RDS, Lambda, EKS), GCP, Azure basics</div>
+  <div class="skill-cat"><strong>DevOps Tools</strong>Docker, Kubernetes, Terraform, Ansible, Jenkins, GitHub Actions</div>
+  <div class="skill-cat"><strong>Monitoring</strong>Prometheus, Grafana, ELK Stack, Datadog</div>
+  <div class="skill-cat"><strong>Languages</strong>Bash, Python, Go (basic), YAML, HCL</div>
+</div>
+
+<div class="section-title">Experience</div>
+<div>
+  <span class="item-title">DevOps Intern — Infosys</span><span class="item-date">Jun 2024 – Aug 2024</span><br>
+  <span class="item-subtitle">Infosys, Pune</span>
+  <ul>
+    <li>Automated infrastructure provisioning using Terraform reducing deployment time by 60%.</li>
+    <li>Set up Kubernetes clusters on AWS EKS for 12 microservices with auto-scaling policies.</li>
+    <li>Implemented centralized logging with ELK stack and alerting via PagerDuty.</li>
+    <li>Reduced mean time to recovery (MTTR) by 35% through improved monitoring dashboards.</li>
+  </ul>
+</div>
+
+<div class="section-title">Projects</div>
+<div>
+  <span class="item-title">CloudOps Dashboard — Multi-Cloud Monitoring Tool</span><span class="item-date">Nov 2023 – Feb 2024</span>
+  <ul>
+    <li>Built a unified monitoring dashboard for AWS and GCP resources using React and Go backend.</li>
+    <li>Integrated Prometheus metrics scraping and Grafana visualization with custom alerting rules.</li>
+    <li>Deployed with Helm charts on a self-managed K8s cluster with GitOps using ArgoCD.</li>
+  </ul>
+</div>
+<br>
+<div>
+  <span class="item-title">CI/CD Pipeline Automation Framework</span><span class="item-date">Jul 2023 – Oct 2023</span>
+  <ul>
+    <li>Designed reusable GitHub Actions workflows for Node.js and Python microservices.</li>
+    <li>Included automated testing, Docker build, ECR push, and ECS deployment stages.</li>
+    <li>Reduced manual deployment effort by 80% across 3 internal projects.</li>
+  </ul>
+</div>
+
+<div class="section-title">Certifications</div>
+<ul>
+  <li>AWS Certified DevOps Engineer – Professional (2024)</li>
+  <li>Certified Kubernetes Administrator (CKA) — CNCF (2023)</li>
+  <li>HashiCorp Certified: Terraform Associate (2024)</li>
+</ul>
+
+</body>
+</html>

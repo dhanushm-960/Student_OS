@@ -12,6 +12,11 @@ const calendarEventSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    description: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     category: {
       type: String,
       enum: ["Assignment", "Project", "Exam", "Placement Prep", "Personal Study", "Recruitment Drive"],
@@ -39,6 +44,11 @@ const calendarEventSchema = new mongoose.Schema(
     linkedId: {
       type: String, // references dynamic ID of assignment/project if linked
       default: "",
+    },
+    source: {
+      type: String,
+      enum: ["manual", "ai_generated"],
+      default: "manual",
     },
   },
   {

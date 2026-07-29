@@ -19,42 +19,46 @@ const pdfParse = require('pdf-parse');
 // Helper: Deterministic placement predictor (NO AI)
 const predictPlacementForStudent = async (profile) => {
   const gpa = profile.gpa || 0;
-  const dsaProgress = profile.dsaProgress || 0;
-  const projectsCount = profile.projectsCompleted || 0;
   const resumeScore = profile.resumeDetails?.score || 0;
 
-  // Database checks
-  const [completedTasks, projects] = await Promise.all([
+  // Resume-extracted signals (these change per uploaded resume)
+  const resumeProjects    = (profile.resumeDetails?.projects || []).length;
+  const resumeExperience  = (profile.resumeDetails?.experience || []).length;
+  const resumeCerts       = (profile.resumeDetails?.certifications || []).length;
+  const resumeHasGitHub   = !!(profile.resumeDetails?.github);
+  const resumeHasLinkedIn = !!(profile.resumeDetails?.linkedin);
+
+  // DB signals
+  const [completedTasks] = await Promise.all([
     StudentTask.countDocuments({ student: profile.user, status: "Completed" }),
-    Project.countDocuments({ student: profile.user }),
   ]);
 
-  // Recruiter Match Scores calculation
+  // Recruiter match score (uses ONLY current resume skills - no stale profile.skills)
   const companies = await Company.find({});
   let totalMatchScore = 0;
+  const mergedSkillsLower = [...new Set([
+    ...(profile.resumeDetails?.technicalSkills || []),
+    ...(profile.resumeDetails?.programmingLanguages || []),
+    ...(profile.resumeDetails?.frameworks || []),
+    ...(profile.resumeDetails?.tools || []),
+    ...(profile.resumeDetails?.databases || []),
+  ])].map(s => s.toLowerCase());
   companies.forEach(company => {
     let mScore = 0;
-    if (profile.gpa >= company.minGpa) mScore += 30;
-    else if (profile.gpa >= company.minGpa - 0.5) mScore += 15;
-    
-    let matchedSkillsCount = 0;
-    const studentSkillsLower = (profile.skills || []).map(s => s.toLowerCase());
+    if (gpa >= company.minGpa) mScore += 30;
+    else if (gpa >= company.minGpa - 0.5) mScore += 15;
+
     if (company.requiredSkills && company.requiredSkills.length > 0) {
-      company.requiredSkills.forEach(s => {
-        if (studentSkillsLower.includes(s.toLowerCase())) matchedSkillsCount++;
-      });
-      mScore += (matchedSkillsCount / company.requiredSkills.length) * 40;
+      const matched = company.requiredSkills.filter(s => mergedSkillsLower.includes(s.toLowerCase())).length;
+      mScore += (matched / company.requiredSkills.length) * 40;
     } else {
       mScore += 40;
     }
 
-    let matchedTechCount = 0;
+    const studentTechLower = (profile.resumeDetails?.technicalSkills || []).map(t => t.toLowerCase());
     if (company.preferredTech && company.preferredTech.length > 0) {
-      const studentTechLower = (profile.resumeDetails?.technologies || profile.resumeDetails?.technicalSkills || []).map(t => t.toLowerCase());
-      company.preferredTech.forEach(t => {
-        if (studentTechLower.includes(t.toLowerCase())) matchedTechCount++;
-      });
-      mScore += (matchedTechCount / company.preferredTech.length) * 30;
+      const matched = company.preferredTech.filter(t => studentTechLower.includes(t.toLowerCase())).length;
+      mScore += (matched / company.preferredTech.length) * 30;
     } else {
       mScore += 30;
     }
@@ -63,34 +67,49 @@ const predictPlacementForStudent = async (profile) => {
 
   const avgMatchScore = companies.length > 0 ? (totalMatchScore / companies.length) : 0;
 
-  // Compute a weighted score out of 100
-  const resScore = (resumeScore / 100) * 25;
-  const matchScoreWeight = (avgMatchScore / 100) * 25;
-  const acadScore = ((gpa / 10) * 10) + ((dsaProgress / 100) * 10);
-  const projScore = Math.min(15, (projectsCount + projects) * 5);
-  const certsCount = profile.resumeDetails?.certifications?.length || 0;
-  const consistencyScore = Math.min(10, completedTasks * 0.5) + Math.min(5, certsCount * 2.5);
+  // Weighted score (100 pts total):
+  // Resume Quality    65% — primary differentiator, AI-graded
+  // Recruiter Fit     15% — skills match against configured companies (resume skills only)
+  // Academic          10% — GPA
+  // Projects & Exp     7% — entries extracted from resume
+  // Certs & Presence   3% — certifications, GitHub, LinkedIn
 
-  const finalScore = Math.round(resScore + matchScoreWeight + acadScore + projScore + consistencyScore);
+  const resScore   = (resumeScore / 100) * 65;
+  const matchWt    = (avgMatchScore / 100) * 15;
+  const acadScore  = (gpa / 10) * 10;
+
+  const projAndExp = Math.min(7,
+    Math.min(4, resumeProjects * 0.8) +
+    Math.min(3, resumeExperience * 1.5)
+  );
+
+  const credScore = Math.min(3,
+    Math.min(1.5, resumeCerts * 0.5) +
+    (resumeHasGitHub ? 0.8 : 0) +
+    (resumeHasLinkedIn ? 0.7 : 0)
+  );
+
+  const finalScore = Math.min(100, Math.round(resScore + matchWt + acadScore + projAndExp + credScore));
 
   let potential = "Low";
   if (finalScore >= 75) potential = "High";
   else if (finalScore >= 50) potential = "Medium";
 
   const breakdown = [
-    { label: "Resume Strength", value: Math.round((resScore/25)*100), max: 100, weight: "25%" },
-    { label: "Recruiter Fit", value: Math.round((matchScoreWeight/25)*100), max: 100, weight: "25%" },
-    { label: "Academic & DSA", value: Math.round((acadScore/20)*100), max: 100, weight: "20%" },
-    { label: "Projects", value: Math.round((projScore/15)*100), max: 100, weight: "15%" },
-    { label: "Task Consistency", value: Math.round((consistencyScore/15)*100), max: 100, weight: "15%" }
+    { label: "Resume Strength",       value: resumeScore,                                max: 100, weight: "65%" },
+    { label: "Recruiter Fit",         value: Math.round((matchWt / 15) * 100),           max: 100, weight: "15%" },
+    { label: "Academic Performance",  value: Math.round((gpa / 10) * 100),               max: 100, weight: "10%" },
+    { label: "Projects & Experience", value: Math.round((projAndExp / 7) * 100),         max: 100, weight: "7%"  },
+    { label: "Certs & Presence",      value: Math.round((credScore / 3) * 100),          max: 100, weight: "3%"  },
   ];
 
   const recs = [];
-  if (resScore < 15) recs.push("Improve your Resume format and extractable skills.");
-  if (matchScoreWeight < 15) recs.push("Acquire skills required by top matching companies.");
-  if (acadScore < 10) recs.push("Work on CGPA and Data Structures.");
-  if (projScore < 10) recs.push("Build more full-stack projects.");
-  if (recs.length === 0) recs.push("Profile is strong! Focus on mock interviews.");
+  if (resScore < 40)      recs.push("Improve your resume quality - add measurable impact to your projects.");
+  if (matchWt < 8)        recs.push("Acquire skills required by top matching companies.");
+  if (acadScore < 7)      recs.push("Work on maintaining a higher CGPA.");
+  if (resumeProjects < 2) recs.push("Build more projects and list them clearly in your resume.");
+  if (!resumeHasGitHub)   recs.push("Add a GitHub profile link to your resume.");
+  if (recs.length === 0)  recs.push("Profile is strong! Focus on mock interviews and targeting top companies.");
 
   return { score: finalScore, potential, recs, breakdown };
 };
@@ -142,32 +161,19 @@ export const uploadResume = async (req, res, next) => {
       throw new Error("The uploaded document does not appear to be a valid resume. Please upload a real resume PDF.");
     }
 
-    // Call Gemini AI for extraction
+    // Call Groq AI for extraction
     const extractedData = await analyzeResume(pdfText, profile);
 
     const { technicalSkills, softSkills, programmingLanguages, frameworks, libraries, tools, databases, certifications, education, projects, experience, github, linkedin } = extractedData;
     const combinedSkills = [...new Set([...(technicalSkills||[]), ...(programmingLanguages||[]), ...(frameworks||[]), ...(tools||[]), ...(databases||[])])];
 
-    // Deterministic Resume Scoring
-    let score = 0;
-    if (combinedSkills.length > 5) score += 20;
-    else if (combinedSkills.length > 0) score += 10;
-    
-    if (projects && projects.length >= 2) score += 25;
-    else if (projects && projects.length === 1) score += 15;
+    // AI-driven Resume Scoring
+    let score = extractedData.score || 50;
+    let strength = extractedData.strength || "Needs Work";
 
-    if (experience && experience.length > 0) score += 20;
-    if (education && education.length > 5) score += 10;
-    if (github && github.length > 5) score += 15;
-    if (linkedin && linkedin.length > 5) score += 10;
-
-    score = Math.min(100, score);
-    let strength = "Needs Work";
-    if (score > 80) strength = "Strong";
-    else if (score > 60) strength = "Average";
-
-    // Call Gemini for Action Checklist
-    const actionChecklist = await generateActionChecklist(extractedData, { studentProfile: profile });
+    // Call Groq for Action Checklist
+    const actionChecklistData = await generateActionChecklist(extractedData, { studentProfile: profile });
+    const finalChecklist = Array.isArray(actionChecklistData) ? actionChecklistData : [];
 
     profile.resumeDetails = {
       isFallback: extractedData.isFallback || false,
@@ -187,15 +193,15 @@ export const uploadResume = async (req, res, next) => {
       experience,
       github,
       linkedin,
-      actionChecklist,
+      actionChecklist: finalChecklist,
       fileName,
       uploadedAt: new Date()
     };
 
-    // Update main skills
-    const existingSkillsSet = new Set(profile.skills || []);
-    combinedSkills.forEach(s => existingSkillsSet.add(s));
-    profile.skills = Array.from(existingSkillsSet);
+    // Replace skills from current resume (reset, not accumulate, so scores reflect THIS resume)
+    profile.skills = combinedSkills;
+
+
 
     // Re-run placement prediction
     const prediction = await predictPlacementForStudent(profile);
@@ -264,7 +270,9 @@ export const getRecruiterMatches = async (req, res, next) => {
         eligibilityTier: matchData.eligibilityTier,
         matchedSkills: matchData.matchedSkills,
         missingSkills: matchData.missingSkills,
-        recommendation: matchData.recommendation
+        recommendation: matchData.recommendation,
+        majorFitTier: matchData.majorFitTier,
+        majorFitNote: matchData.majorFitNote
       };
     }).filter(Boolean); // Filter out suppressed companies
 
@@ -364,7 +372,7 @@ export const getCompanies = async (req, res, next) => {
 // @access  Private/Admin
 export const addCompany = async (req, res, next) => {
   try {
-    const { name, role, salary, type, minGpa, requiredSkills, preferredTech, logo } = req.body;
+    const { name, role, salary, type, minGpa, requiredSkills, preferredTech, logo, eligibleMajors, eligibleMinors } = req.body;
     if (!name || !role) {
       res.status(400);
       throw new Error("Company name and hiring role are required.");
@@ -378,7 +386,9 @@ export const addCompany = async (req, res, next) => {
       minGpa: Number(minGpa) || 0,
       requiredSkills: Array.isArray(requiredSkills) ? requiredSkills : (requiredSkills || "").split(",").map(s => s.trim()).filter(Boolean),
       preferredTech: Array.isArray(preferredTech) ? preferredTech : (preferredTech || "").split(",").map(t => t.trim()).filter(Boolean),
-      logo: logo || "🏢"
+      logo: logo || "🏢",
+      eligibleMajors: eligibleMajors && eligibleMajors.length > 0 ? (Array.isArray(eligibleMajors) ? eligibleMajors : eligibleMajors.split(",").map(m => m.trim()).filter(Boolean)) : ["ALL"],
+      eligibleMinors: eligibleMinors && eligibleMinors.length > 0 ? (Array.isArray(eligibleMinors) ? eligibleMinors : eligibleMinors.split(",").map(m => m.trim()).filter(Boolean)) : []
     });
 
     // An empty company object as "oldCompany" to force a match score diff (simulating going from 0 score to new score)

@@ -62,6 +62,27 @@ export const calculateMatchScore = (profile, company) => {
   // Filter suppression logic
   const isSuppressed = gpaDiff < -1.0 && skillMatchPercentage < 30;
 
+  // 4. Major Fit Logic
+  let majorFitTier = "match";
+  let majorFitNote = null;
+  const eligibleMajors = company.eligibleMajors || ["ALL"];
+  const eligibleMinors = company.eligibleMinors || [];
+  
+  if ((!eligibleMajors.includes("ALL") && eligibleMajors.length > 0) || eligibleMinors.length > 0) {
+    const majorMatch = eligibleMajors.includes("ALL") || eligibleMajors.includes(profile.major);
+    const minorMatch = eligibleMinors.includes(profile.minor);
+    
+    if (!majorMatch) {
+      if (minorMatch) {
+        majorFitTier = "minor_match";
+        majorFitNote = `This role typically hires ${eligibleMajors.join(", ")} majors. Your major isn't a direct match, but your minor (${profile.minor}) aligns well with their requirements!`;
+      } else {
+        majorFitTier = "atypical";
+        majorFitNote = `This role typically hires ${eligibleMajors.join(", ")} — neither your major (${profile.major || "Unknown"}) nor minor (${profile.minor || "None"}) is a typical fit, but your skills match may still make you a strong candidate.`;
+      }
+    }
+  }
+
   // Recommendation logic
   let recommendation = "Apply now!";
   if (missingSkills.length > 0) {
@@ -82,6 +103,8 @@ export const calculateMatchScore = (profile, company) => {
     isSuppressed,
     matchedSkills,
     missingSkills,
-    recommendation
+    recommendation,
+    majorFitTier,
+    majorFitNote
   };
 };

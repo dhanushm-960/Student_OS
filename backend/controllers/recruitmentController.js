@@ -13,13 +13,14 @@ import fs from "fs";
 // @access  Private/Admin
 export const createDrive = async (req, res, next) => {
   try {
-    const { companyId, roleTitle, description, deadline } = req.body;
+    const { companyId, roleTitle, description, deadline, eligibleMajors } = req.body;
 
     const drive = await RecruitmentDrive.create({
       companyId,
       roleTitle,
       description,
       deadline,
+      eligibleMajors: eligibleMajors || ["ALL"],
       createdBy: req.user._id
     });
 
@@ -117,7 +118,9 @@ export const getEligibleDrives = async (req, res, next) => {
         isEligible: matchData.eligibilityTier === "eligible",
         ineligibilityReason: matchData.isSuppressed 
             ? "Your GPA does not meet the minimum tier requirements for this company."
-            : (matchData.eligibilityTier !== "eligible" ? "Your skill match score is too low." : null)
+            : (matchData.eligibilityTier !== "eligible" ? "Your skill match score is too low." : null),
+        majorFitTier: matchData.majorFitTier,
+        majorFitNote: matchData.majorFitNote
       };
     }).filter(Boolean);
 

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Riya Singh - Resume</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Arial', sans-serif; font-size: 11px; color: #222; padding: 32px; line-height: 1.5; }
+  h1 { font-size: 22px; font-weight: 700; letter-spacing: 1px; }
+  .subtitle { font-size: 12px; color: #555; margin-top: 2px; }
+  .contact { font-size: 10px; color: #444; margin-top: 4px; }
+  hr { border: none; border-top: 2px solid #333; margin: 10px 0; }
+  .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #111; border-bottom: 1px solid #ccc; padding-bottom: 3px; margin: 14px 0 8px; }
+  .item-title { font-weight: 700; font-size: 11px; }
+  .item-subtitle { font-style: italic; color: #555; font-size: 10px; }
+  .item-date { float: right; color: #555; font-size: 10px; }
+  ul { margin-left: 18px; }
+  ul li { margin-bottom: 3px; }
+  .skills-grid { display: flex; gap: 24px; flex-wrap: wrap; }
+  .skill-cat { flex: 1; min-width: 140px; }
+  .skill-cat strong { display: block; margin-bottom: 4px; font-size: 10px; text-transform: uppercase; color: #555; letter-spacing: 0.5px; }
+  @media print { body { padding: 20px; } }
+</style>
+</head>
+<body>
+
+<h1>RIYA SINGH</h1>
+<div class="subtitle">Backend Developer | Systems Programmer</div>
+<div class="contact">riya.singh@email.com · +91 87654 32109 · github.com/riyasingh · linkedin.com/in/riya-singh · Kolkata, India</div>
+<hr>
+
+<div class="section-title">Education</div>
+<div>
+  <span class="item-title">B.Tech in Computer Science &amp; Engineering</span><span class="item-date">Jul 2021 – Jun 2025</span><br>
+  <span class="item-subtitle">Jadavpur University — CGPA: 8.9/10</span>
+  <ul><li>Coursework: Advanced Algorithms, Systems Programming, Distributed Systems, Compilers, OS Design</li></ul>
+</div>
+
+<div class="section-title">Technical Skills</div>
+<div class="skills-grid">
+  <div class="skill-cat"><strong>Languages</strong>C++, Go, Rust, Python, Java, SQL</div>
+  <div class="skill-cat"><strong>Systems</strong>Linux kernel modules, POSIX threading, gRPC, Protocol Buffers</div>
+  <div class="skill-cat"><strong>Databases</strong>PostgreSQL, Redis, Cassandra</div>
+  <div class="skill-cat"><strong>Tools</strong>GDB, Valgrind, Git, Docker, Perf, Flamegraph</div>
+</div>
+
+<div class="section-title">Experience</div>
+<div>
+  <span class="item-title">Systems Engineering Intern — Flipkart</span><span class="item-date">May 2024 – Aug 2024</span><br>
+  <span class="item-subtitle">Flipkart, Bangalore</span>
+  <ul>
+    <li>Optimized an internal gRPC service handling 50k RPS; reduced P99 latency from 120ms to 45ms via connection pooling and serialization improvements.</li>
+    <li>Wrote a custom memory allocator in C++ for the storage engine reducing GC pauses by 60%.</li>
+    <li>Investigated kernel-level performance bottlenecks using Perf and eBPF probes.</li>
+  </ul>
+</div>
+
+<div class="section-title">Projects</div>
+<div>
+  <span class="item-title">MiniDB — Custom Key-Value Store in Go</span><span class="item-date">Sep 2023 – Dec 2023</span>
+  <ul>
+    <li>Implemented a persistent key-value store from scratch in Go with LSM-tree storage engine.</li>
+    <li>Supports MVCC for concurrent reads, WAL for crash recovery, and Bloom filters for efficient lookups.</li>
+    <li>Benchmarked at 180k reads/sec and 90k writes/sec on a single node.</li>
+    <li>Open-sourced with 350+ GitHub stars.</li>
+  </ul>
+</div>
+<br>
+<div>
+  <span class="item-title">RaftKV — Distributed Consensus with Raft</span><span class="item-date">Mar 2023 – Jul 2023</span>
+  <ul>
+    <li>Implemented the Raft consensus algorithm from scratch in Go for a distributed key-value store.</li>
+    <li>Supports leader election, log replication, and snapshotting for fault-tolerant operation.</li>
+  </ul>
+</div>
+
+<div class="section-title">Achievements</div>
+<ul>
+  <li>2nd Place — ICPC Asia Regionals 2023 (Kolkata site)</li>
+  <li>Codeforces: Grandmaster (Rating 2650)</li>
+  <li>Google Code Jam 2024 — Round 3 qualifier</li>
+</ul>
+
+</body>
+</html>

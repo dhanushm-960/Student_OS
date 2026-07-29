@@ -3,6 +3,7 @@ import { GraduationCap, Phone, MapPin, Sparkles, FileText, CheckCircle2, Briefca
 import { useNavigate, Navigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import { apiRequest } from "../utils/api";
+import { DEGREES, MAJORS, MINORS, CAREER_GOALS_BY_MINOR } from "../constants/careerGoals";
 
 export function StudentOnboardingPage() {
   const { user, profile, loading: authLoading, refreshUser } = useAuth();
@@ -13,6 +14,7 @@ export function StudentOnboardingPage() {
   const [university, setUniversity] = useState("");
   const [degree, setDegree] = useState("");
   const [major, setMajor] = useState("");
+  const [minor, setMinor] = useState("");
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
   
@@ -100,6 +102,11 @@ export function StudentOnboardingPage() {
       return;
     }
 
+    if (!degree || !major || !minor || !careerGoal) {
+      setError("Please complete your Degree, Major, Minor, and Career Goal selections.");
+      return;
+    }
+
     const parsedProjects = Number(projects);
     if (isNaN(parsedProjects) || parsedProjects < 0) {
       setError("Projects Count must be a positive number.");
@@ -117,6 +124,7 @@ export function StudentOnboardingPage() {
           phone,
           location,
           major,
+          minor,
           completedCredits: parsedCredits,
           gpa: parsedGpa,
           projectsCompleted: parsedProjects,
@@ -195,44 +203,62 @@ export function StudentOnboardingPage() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
                 <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">Degree & Course</label>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">Degree</label>
                   <select
                     value={degree}
-                    onChange={(e) => setDegree(e.target.value)}
+                    onChange={(e) => {
+                      setDegree(e.target.value);
+                      setMajor("");
+                      setMinor("");
+                      setCareerGoal("");
+                    }}
                     required
-                    className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-900/40 text-white focus:outline-none focus:border-indigo-500 text-sm"
+                    className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-900/40 text-white focus:outline-none focus:border-indigo-500 text-sm disabled:opacity-50"
                     disabled={saving}
                   >
-                    <option value="" disabled className="bg-slate-950 text-slate-400">Select Degree & Course</option>
-                    <option value="B.Tech Computer Science" className="bg-slate-950">B.Tech Computer Science</option>
-                    <option value="B.Tech Information Technology" className="bg-slate-950">B.Tech Information Technology</option>
-                    <option value="B.Tech Electronics & Communication" className="bg-slate-950">B.Tech Electronics & Communication</option>
-                    <option value="B.Tech Mechanical Engineering" className="bg-slate-950">B.Tech Mechanical Engineering</option>
-                    <option value="B.Tech Civil Engineering" className="bg-slate-950">B.Tech Civil Engineering</option>
-                    <option value="B.Sc Data Science" className="bg-slate-950">B.Sc Data Science</option>
-                    <option value="M.Tech Software Engineering" className="bg-slate-950">M.Tech Software Engineering</option>
+                    <option value="" disabled className="bg-slate-950 text-slate-400">Select Degree</option>
+                    {DEGREES.map((d) => (
+                      <option key={d} value={d} className="bg-slate-950">{d}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">Specialization / Major</label>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">Major / Specialization</label>
                   <select
                     value={major}
-                    onChange={(e) => setMajor(e.target.value)}
+                    onChange={(e) => {
+                      setMajor(e.target.value);
+                      setMinor("");
+                      setCareerGoal("");
+                    }}
                     required
-                    className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-900/40 text-white focus:outline-none focus:border-indigo-500 text-sm"
-                    disabled={saving}
+                    className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-900/40 text-white focus:outline-none focus:border-indigo-500 text-sm disabled:opacity-50"
+                    disabled={saving || !degree}
                   >
-                    <option value="" disabled className="bg-slate-950 text-slate-400">Select Specialization & Major</option>
-                    <option value="Artificial Intelligence" className="bg-slate-950">Artificial Intelligence</option>
-                    <option value="Machine Learning" className="bg-slate-950">Machine Learning</option>
-                    <option value="Data Science" className="bg-slate-950">Data Science</option>
-                    <option value="Cloud Computing" className="bg-slate-950">Cloud Computing</option>
-                    <option value="Cyber Security" className="bg-slate-950">Cyber Security</option>
-                    <option value="Full Stack Development" className="bg-slate-950">Full Stack Development</option>
-                    <option value="Internet of Things" className="bg-slate-950">Internet of Things</option>
-                    <option value="General Computer Science" className="bg-slate-950">General Computer Science</option>
+                    <option value="" disabled className="bg-slate-950 text-slate-400">Select Major</option>
+                    {MAJORS.map((m) => (
+                      <option key={m} value={m} className="bg-slate-950">{m}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">Minor</label>
+                  <select
+                    value={minor}
+                    onChange={(e) => {
+                      setMinor(e.target.value);
+                      setCareerGoal("");
+                    }}
+                    required
+                    className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-900/40 text-white focus:outline-none focus:border-indigo-500 text-sm disabled:opacity-50"
+                    disabled={saving || !major}
+                  >
+                    <option value="" disabled className="bg-slate-950 text-slate-400">Select Minor</option>
+                    {MINORS.map((m) => (
+                      <option key={m} value={m} className="bg-slate-950">{m}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -333,16 +359,13 @@ export function StudentOnboardingPage() {
                     value={careerGoal}
                     onChange={(e) => setCareerGoal(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-900/40 text-white focus:outline-none focus:border-indigo-500 text-sm"
-                    disabled={saving}
+                    className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-slate-900/40 text-white focus:outline-none focus:border-indigo-500 text-sm disabled:opacity-50"
+                    disabled={saving || !minor}
                   >
                     <option value="" disabled className="bg-slate-950 text-slate-400">Select Career Goal</option>
-                    <option value="Software Engineer" className="bg-slate-950">Software Engineer</option>
-                    <option value="AI Engineer" className="bg-slate-950">AI/ML Engineer</option>
-                    <option value="Data Scientist" className="bg-slate-950">Data Scientist</option>
-                    <option value="Product Manager" className="bg-slate-950">Product Manager</option>
-                    <option value="Consultant" className="bg-slate-950">Consultant</option>
-                    <option value="Other" className="bg-slate-950">Other</option>
+                    {minor && CAREER_GOALS_BY_MINOR[minor]?.map((goal) => (
+                      <option key={goal} value={goal} className="bg-slate-950">{goal}</option>
+                    ))}
                   </select>
                 </div>
                 <div>

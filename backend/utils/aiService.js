@@ -12,81 +12,15 @@ const fallbackQuestionsBank = JSON.parse(fs.readFileSync(fallbackQuestionsPath, 
 dotenv.config();
 
 /**
- * Sends a generation request to the Gemini API.
- * 
- * @param {string} systemPrompt Persona and system constraints
- * @param {string} userPrompt The main user query / instruction
- * @param {Array} history Conversation history
- * @returns {Promise<string|null>} The generated text response or null if failed
- */
-const callGemini = async (systemPrompt, userPrompt, history = [], signal = null) => {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return null;
-
-  try {
-    const messages = [];
-
-    // Map history to Gemini format
-    // Gemini roles: "user" or "model"
-    history.forEach(msg => {
-      messages.push({
-        role: msg.role === "assistant" ? "model" : "user",
-        parts: [{ text: msg.text }]
-      });
-    });
-
-    // Append latest prompt
-    messages.push({
-      role: "user",
-      parts: [{ text: userPrompt }]
-    });
-
-    console.log(`📡 [AI Service] Calling Google Gemini API with ${messages.length} content nodes...`);
-
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      signal,
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: systemPrompt }]
-        },
-        contents: messages,
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 2048
-        }
-      })
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error(`❌ [AI Service] Gemini API error: ${response.status} - ${errText}`);
-      return null;
-    }
-
-    const data = await response.json();
-    const resultText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    return resultText ? resultText.trim() : null;
-  } catch (error) {
-    console.error("❌ [AI Service] Exception during Gemini fetch:", error);
-    return null;
-  }
-};
-
-/**
- * Sends a generation request to the OpenAI API.
+ * Sends a generation request to the Groq API (Free Tier).
  *
  * @param {string} systemPrompt Persona and system constraints
  * @param {string} userPrompt The main user query / instruction
  * @param {Array} history Conversation history
  * @returns {Promise<string|null>} The generated text response or null if failed
  */
-const callOpenAI = async (systemPrompt, userPrompt, history = [], signal = null) => {
-  const apiKey = process.env.OPENAI_API_KEY;
+const callGroq = async (systemPrompt, userPrompt, history = [], signal = null, options = {}) => {
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) return null;
 
   try {
@@ -103,9 +37,9 @@ const callOpenAI = async (systemPrompt, userPrompt, history = [], signal = null)
 
     messages.push({ role: "user", content: userPrompt });
 
-    console.log(`📡 [AI Service] Calling OpenAI API as fallback model...`);
+    console.log(`📡 [AI Service] Calling Groq API as secondary fallback model...`);
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -113,16 +47,17 @@ const callOpenAI = async (systemPrompt, userPrompt, history = [], signal = null)
       },
       signal,
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "llama-3.3-70b-versatile", // High capability free model
         messages,
         temperature: 0.7,
-        max_tokens: 2048
+        max_tokens: 2048,
+        ...(options?.isJson ? { response_format: { type: "json_object" } } : {})
       })
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error(`❌ [AI Service] OpenAI API error: ${response.status} - ${errText}`);
+      console.error(`❌ [AI Service] Groq API error: ${response.status} - ${errText}`);
       return null;
     }
 
@@ -130,21 +65,17 @@ const callOpenAI = async (systemPrompt, userPrompt, history = [], signal = null)
     const resultText = data?.choices?.[0]?.message?.content;
     return resultText ? resultText.trim() : null;
   } catch (error) {
-    console.error("❌ [AI Service] Exception during OpenAI fetch:", error);
+    console.error("❌ [AI Service] Exception during Groq fetch:", error);
     return null;
   }
 };
 
 /**
- * Dispatches the prompt to Gemini (primary) or OpenAI (fallback).
+ * Dispatches the prompt to Groq (Primary API).
  */
-const generateResponse = async (systemPrompt, userPrompt, history = [], signal = null) => {
-  // 1. Try Google Gemini API
-  let response = await callGemini(systemPrompt, userPrompt, history, signal);
-  if (response) return response;
-
-  // 2. Try OpenAI API as fallback
-  response = await callOpenAI(systemPrompt, userPrompt, history, signal);
+const generateResponse = async (systemPrompt, userPrompt, history = [], signal = null, options = {}) => {
+  // Use Groq API exclusively to save time as per user request
+  const response = await callGroq(systemPrompt, userPrompt, history, signal, options);
   if (response) return response;
 
   return null;
@@ -164,15 +95,19 @@ function parseJSON(text) {
 /**
  * Reliable wrapper with schema validation, retries, timeout, and fallback logic.
  */
-const callGeminiSafely = async (systemPrompt, userPrompt, schema, fallbackFn, options = {}) => {
+export const callAISafely = async (systemPrompt, userPrompt, schema, fallbackFn, options = {}) => {
   const timeoutMs = options.timeoutMs || 15000;
   const history = options.history || [];
+  
+  if (options.isJson === undefined) {
+    options.isJson = !(schema instanceof z.ZodString);
+  }
 
   const attempt = async () => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const responseText = await generateResponse(systemPrompt, userPrompt, history, controller.signal);
+      const responseText = await generateResponse(systemPrompt, userPrompt, history, controller.signal, options);
       clearTimeout(timeoutId);
       
       if (!responseText) throw new Error("Empty response from AI");
@@ -269,8 +204,8 @@ Evaluate gap, assign readiness boosts (+3% to +10%) and output the JSON.`;
     }
     if (profile.skills.length < 5) {
       allRecs.push({
-        title: "Practice DSA coding problems",
-        explanation: "Leetcode dynamic programming and trees are frequently evaluated by top recruiters.",
+        title: "Master core technical skills",
+        explanation: "Deepen your understanding of your major's core concepts to excel in technical evaluations.",
         impact: 6
       });
     }
@@ -288,7 +223,7 @@ Evaluate gap, assign readiness boosts (+3% to +10%) and output the JSON.`;
     };
   };
 
-  return await callGeminiSafely(systemPrompt, userPrompt, schema, fallbackFn);
+  return await callAISafely(systemPrompt, userPrompt, schema, fallbackFn);
 };
 
 /**
@@ -373,7 +308,7 @@ Create optimal schedule, determine which rescheduledTaskIds must wait, compile r
     };
   };
 
-  return await callGeminiSafely(systemPrompt, userPrompt, schema, fallbackFn);
+  return await callAISafely(systemPrompt, userPrompt, schema, fallbackFn);
 };
 
 /**
@@ -386,7 +321,7 @@ Return ONLY a valid JSON object matching this structure:
 {
   "summary": "Actions completed, focus diagnostic and advice",
   "idealWorkloadHours": 20,
-  "focusArea": "DSA"
+  "focusArea": "Core Knowledge"
 }
 Do not write any other text. Just JSON.`;
 
@@ -414,7 +349,7 @@ Do not write any other text. Just JSON.`;
     };
   };
 
-  return await callGeminiSafely(systemPrompt, userPrompt, schema, fallbackFn);
+  return await callAISafely(systemPrompt, userPrompt, schema, fallbackFn);
 };
 
 /**
@@ -457,7 +392,7 @@ Guidelines:
     return "I'm having trouble responding right now — please try again in a moment.";
   };
 
-  return await callGeminiSafely(systemPrompt, userMessage, z.string(), fallbackFn, { history });
+  return await callAISafely(systemPrompt, userMessage, z.string(), fallbackFn, { history });
 };
 
 /**
@@ -468,9 +403,13 @@ export const analyzeResume = async (resumeText, profile = null) => {
 Extract information from the provided resume text and return ONLY a valid JSON object.
 IMPORTANT: First determine if the text provided is actually a resume. If it is NOT a resume (e.g. a random document, an essay, a syllabus, or gibberish), set "isResume" to false and leave the rest empty.
 
+Evaluate the resume and assign a "score" (0-100) and "strength" ("Needs Work", "Average", "Strong") based on how well the resume aligns with the student's target career goal, major, and minor. A perfect 100 should only be given to exceptional, highly targeted resumes.
+
 Structure:
 {
   "isResume": true or false,
+  "score": 75,
+  "strength": "Average",
   "technicalSkills": ["skill1", "skill2"],
   "softSkills": ["skill1"],
   "programmingLanguages": ["lang1"],
@@ -487,23 +426,39 @@ Structure:
 }
 Do not include any extra markdown formatting outside the JSON block.`;
 
-  const userPrompt = `Resume Text:\n${resumeText}`;
+  const userPrompt = `Student Context:
+- Target Career Goal: ${profile?.careerGoal || 'Unknown'}
+- Major: ${profile?.major || 'Unknown'}
+- Minor: ${profile?.minor || 'None'}
+
+Resume Text:\n${resumeText}`;
+
+  const safeArray = z.preprocess(
+    (val) => {
+      if (typeof val === 'string') return val.split(',').map(s => s.trim());
+      if (Array.isArray(val)) return val.map(String);
+      return [];
+    },
+    z.array(z.string())
+  ).optional();
 
   const schema = z.object({
-    isResume: z.boolean(),
-    technicalSkills: z.array(z.string()).optional(),
-    softSkills: z.array(z.string()).optional(),
-    programmingLanguages: z.array(z.string()).optional(),
-    frameworks: z.array(z.string()).optional(),
-    libraries: z.array(z.string()).optional(),
-    tools: z.array(z.string()).optional(),
-    databases: z.array(z.string()).optional(),
-    certifications: z.array(z.string()).optional(),
-    education: z.string().optional(),
-    projects: z.array(z.string()).optional(),
-    experience: z.array(z.string()).optional(),
-    github: z.string().optional(),
-    linkedin: z.string().optional()
+    isResume: z.coerce.boolean().optional(),
+    score: z.coerce.number().optional(),
+    strength: z.coerce.string().optional(),
+    technicalSkills: safeArray,
+    softSkills: safeArray,
+    programmingLanguages: safeArray,
+    frameworks: safeArray,
+    libraries: safeArray,
+    tools: safeArray,
+    databases: safeArray,
+    certifications: safeArray,
+    education: z.any().optional(),
+    projects: safeArray,
+    experience: safeArray,
+    github: z.any().optional(),
+    linkedin: z.any().optional()
   });
 
   const fallbackFn = () => {
@@ -512,6 +467,8 @@ Do not include any extra markdown formatting outside the JSON block.`;
       return {
         isFallback: true,
         isResume: true,
+        score: profile.resumeDetails.score || 60,
+        strength: profile.resumeDetails.strength || "Average",
         technicalSkills: profile.resumeDetails.technicalSkills || [],
         softSkills: profile.resumeDetails.softSkills || [],
         programmingLanguages: profile.resumeDetails.programmingLanguages || [],
@@ -531,7 +488,9 @@ Do not include any extra markdown formatting outside the JSON block.`;
     return {
       isFallback: true,
       isResume: true,
-      technicalSkills: ["React", "Node.js", "JavaScript"],
+      score: 50,
+      strength: "Needs Work",
+      technicalSkills: ["JavaScript", "HTML/CSS"],
       softSkills: ["Communication", "Teamwork"],
       programmingLanguages: ["JavaScript", "Python"],
       frameworks: ["Express"],
@@ -547,7 +506,7 @@ Do not include any extra markdown formatting outside the JSON block.`;
     };
   };
 
-  return await callGeminiSafely(systemPrompt, userPrompt, schema, fallbackFn);
+  return await callAISafely(systemPrompt, userPrompt, schema, fallbackFn);
 };
 
 /**
@@ -585,7 +544,7 @@ Suggest actionable improvements (e.g. Add measurable achievements, add GitHub pr
     ] };
   };
 
-  const parsed = await callGeminiSafely(systemPrompt, userPrompt, schema, fallbackFn);
+  const parsed = await callAISafely(systemPrompt, userPrompt, schema, fallbackFn);
   return parsed.checklist;
 };
 
@@ -658,7 +617,7 @@ Return ONLY a valid JSON object matching this structure:
     return { questions: fallbackQuestions };
   };
 
-  return await callGeminiSafely(systemPrompt, userPrompt, schema, fallbackFn);
+  return await callAISafely(systemPrompt, userPrompt, schema, fallbackFn);
 };
 
 /**
@@ -689,6 +648,6 @@ Generate the insight:`;
     return `Learning ${missingSkills[0]} could significantly improve your placement readiness, as it is highly demanded by top companies right now.`;
   };
 
-  return await callGeminiSafely(systemPrompt, userPrompt, z.string(), fallbackFn);
+  return await callAISafely(systemPrompt, userPrompt, z.string(), fallbackFn);
 };
 

@@ -29,7 +29,7 @@ export const getDashboardStats = async (req, res, next) => {
           atRiskCount: "0",
           avgGpa: "0.0",
         },
-        dsaData: [],
+
         deptData: [],
         rankedDepts: [],
         atRiskStudents: [],
@@ -95,12 +95,7 @@ export const getDashboardStats = async (req, res, next) => {
     const internshipReady = students.filter(s => s.placementReadiness >= 50).length;
     const resumeCompletion = students.filter(s => s.projectsCompleted >= 2).length;
 
-    const dsaData = [
-      { level: "Beginner", count: students.filter(s => s.dsaProgress < 40).length },
-      { level: "Intermediate", count: students.filter(s => s.dsaProgress >= 40 && s.dsaProgress < 70).length },
-      { level: "Advanced", count: students.filter(s => s.dsaProgress >= 70 && s.dsaProgress < 85).length },
-      { level: "Expert", count: students.filter(s => s.dsaProgress >= 85).length },
-    ];
+
 
     // Department Performance
     const depts = ["CSE", "IT", "Electronics", "Mechanical", "Civil"];
@@ -142,11 +137,9 @@ export const getDashboardStats = async (req, res, next) => {
 
     // Skill data
     const skillData = [
-      { skill: "Data Structures", enrolled: totalStudents, completed: students.filter(s => s.dsaProgress >= 70).length, growth: 28 },
-      { skill: "Full Stack Dev", enrolled: totalStudents, completed: students.filter(s => s.projectsCompleted >= 3).length, growth: 35 },
-      { skill: "Machine Learning", enrolled: Math.round(totalStudents * 0.6), completed: students.filter(s => s.gpa >= 8.5 && s.department === "CSE").length, growth: 42 },
-      { skill: "Aptitude & Reasoning", enrolled: totalStudents, completed: students.filter(s => s.placementReadiness >= 60).length, growth: 15 },
-      { skill: "System Design", enrolled: Math.round(totalStudents * 0.4), completed: students.filter(s => s.year >= 3 && s.dsaProgress >= 80).length, growth: 55 },
+      { skill: "Frontend", enrolled: totalStudents, completed: students.filter(s => s.projectsCompleted >= 1).length, growth: 28 },
+      { skill: "Backend", enrolled: Math.round(totalStudents * 0.8), completed: students.filter(s => s.projectsCompleted >= 2).length, growth: 42 },
+      { skill: "System Design", enrolled: Math.round(totalStudents * 0.4), completed: students.filter(s => s.year >= 3 && s.gpa >= 8).length, growth: 55 },
     ];
 
     const heatmapData = depts.map(d => {
@@ -154,10 +147,9 @@ export const getDashboardStats = async (req, res, next) => {
       const count = deptStudents.length || 1;
       return {
         dept: d === "Electronics" ? "ECE" : d === "Mechanical" ? "Mech" : d,
-        dsa: Math.round(deptStudents.reduce((acc, s) => acc + s.dsaProgress, 0) / count),
         fullstack: Math.round(deptStudents.reduce((acc, s) => acc + (s.projectsCompleted * 20), 0) / count),
-        ml: Math.round(deptStudents.reduce((acc, s) => acc + (s.gpa * 10), 0) / count),
-        aptitude: Math.round(deptStudents.reduce((acc, s) => acc + s.placementReadiness, 0) / count),
+        ml: Math.round(deptStudents.reduce((acc, s) => acc + (s.projectsCompleted * 10), 0) / count),
+        aptitude: Math.round(deptStudents.reduce((acc, s) => acc + (s.gpa * 8), 0) / count)
       };
     });
 
@@ -243,7 +235,7 @@ export const getDashboardStats = async (req, res, next) => {
         atRiskCount: atRiskCount.toString(),
         avgGpa: (students.reduce((acc, s) => acc + s.gpa, 0) / totalStudents).toFixed(1),
       },
-      dsaData,
+
       deptData,
       rankedDepts,
       atRiskStudents,
@@ -298,12 +290,11 @@ export const getStudents = async (req, res, next) => {
       year: s.year,
       gpa: s.gpa,
       attendance: s.attendance,
-      dsa: s.dsaProgress,
       projects: s.projectsCompleted,
       placement: s.placementReadiness,
       goals: s.goalProgress,
       risk: s.riskLevel,
-      placementBreakdown: s.placementBreakdown || { resume: 0, projects: 0, dsa: 0, communication: 0 },
+      placementBreakdown: s.placementBreakdown || { resume: 0, projects: 0, communication: 0 },
       careerGoal: s.careerGoal || "",
       skills: s.skills || [],
       resumeDetails: s.resumeDetails || { score: 0, skills: [], education: "", projects: [], technologies: [], suggestions: [], fileName: "" },
@@ -374,7 +365,7 @@ export const createStudent = async (req, res, next) => {
     year,
     gpa,
     attendance,
-    dsaProgress,
+
     projectsCompleted,
     placementReadiness,
     goalProgress,
@@ -418,13 +409,13 @@ export const createStudent = async (req, res, next) => {
       year: Number(year) || 1,
       gpa: Number(gpa) || 0,
       attendance: Number(attendance) || 0,
-      dsaProgress: Number(dsaProgress) || 0,
+
       projectsCompleted: Number(projectsCompleted) || 0,
       placementReadiness: Number(placementReadiness) || 0,
       goalProgress: Number(goalProgress) || 0,
       riskLevel: riskLevel || "Low",
       aiRecommendations: aiRecommendations || [
-        "Complete DSA practice problems daily — target 5 LeetCode problems/week",
+        "Complete a full stack project this week to boost your technical portfolio",
         "Participate in upcoming mock interview sessions this Friday",
       ],
     });
@@ -437,11 +428,11 @@ export const createStudent = async (req, res, next) => {
         name: user.name,
         email: user.email,
         roll: profile.rollNumber,
-        dept: profile.department,
+        dept: profile.major,
         year: profile.year,
         gpa: profile.gpa,
         attendance: profile.attendance,
-        dsa: profile.dsaProgress,
+
         projects: profile.projectsCompleted,
         placement: profile.placementReadiness,
         goals: profile.goalProgress,

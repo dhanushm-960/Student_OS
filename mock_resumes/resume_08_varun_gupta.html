@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Varun Gupta - Resume</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Arial', sans-serif; font-size: 11px; color: #222; padding: 32px; line-height: 1.5; }
+  h1 { font-size: 22px; font-weight: 700; letter-spacing: 1px; }
+  .subtitle { font-size: 12px; color: #555; margin-top: 2px; }
+  .contact { font-size: 10px; color: #444; margin-top: 4px; }
+  hr { border: none; border-top: 2px solid #333; margin: 10px 0; }
+  .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #111; border-bottom: 1px solid #ccc; padding-bottom: 3px; margin: 14px 0 8px; }
+  .item-title { font-weight: 700; font-size: 11px; }
+  .item-subtitle { font-style: italic; color: #555; font-size: 10px; }
+  .item-date { float: right; color: #555; font-size: 10px; }
+  ul { margin-left: 18px; }
+  ul li { margin-bottom: 3px; }
+  .skills-grid { display: flex; gap: 24px; flex-wrap: wrap; }
+  .skill-cat { flex: 1; min-width: 140px; }
+  .skill-cat strong { display: block; margin-bottom: 4px; font-size: 10px; text-transform: uppercase; color: #555; letter-spacing: 0.5px; }
+  @media print { body { padding: 20px; } }
+</style>
+</head>
+<body>
+
+<h1>VARUN GUPTA</h1>
+<div class="subtitle">Full-Stack Developer | Open Source Enthusiast</div>
+<div class="contact">varun.gupta@email.com · +91 96321 45678 · github.com/varung · linkedin.com/in/varun-gupta-dev · Jaipur, India</div>
+<hr>
+
+<div class="section-title">Education</div>
+<div>
+  <span class="item-title">B.Tech in Electronics &amp; Computer Engineering</span><span class="item-date">Aug 2021 – May 2025</span><br>
+  <span class="item-subtitle">MNIT Jaipur — CGPA: 7.5/10</span>
+</div>
+
+<div class="section-title">Technical Skills</div>
+<div class="skills-grid">
+  <div class="skill-cat"><strong>Frontend</strong>React, Next.js, TypeScript, Redux, Tailwind CSS</div>
+  <div class="skill-cat"><strong>Backend</strong>Node.js, Express, Django, REST APIs, GraphQL</div>
+  <div class="skill-cat"><strong>Databases</strong>PostgreSQL, MongoDB, Firebase</div>
+  <div class="skill-cat"><strong>Tools</strong>Git, Docker, Postman, Jira, Linux</div>
+</div>
+
+<div class="section-title">Experience</div>
+<div>
+  <span class="item-title">Full-Stack Developer Intern — Zomato</span><span class="item-date">May 2024 – Jul 2024</span><br>
+  <span class="item-subtitle">Zomato, Gurugram</span>
+  <ul>
+    <li>Contributed to the B2B restaurant dashboard using Next.js and GraphQL.</li>
+    <li>Implemented real-time order tracking feature using WebSockets reducing refresh-dependent requests by 70%.</li>
+    <li>Participated in weekly code reviews and maintained 85%+ test coverage on contributed modules.</li>
+  </ul>
+</div>
+
+<div class="section-title">Projects</div>
+<div>
+  <span class="item-title">DevCollab — Real-Time Collaborative Code Editor</span><span class="item-date">Jan 2024 – Apr 2024</span>
+  <ul>
+    <li>Built a VS Code-like collaborative editor with real-time sync using Operational Transformation and WebSockets.</li>
+    <li>Stack: Next.js, Node.js, Socket.io, MongoDB. Supports 10+ simultaneous users per session.</li>
+    <li>Integrated GitHub OAuth, syntax highlighting (CodeMirror), and session replay feature.</li>
+    <li>400+ GitHub stars, deployed at devcollab.app.</li>
+  </ul>
+</div>
+<br>
+<div>
+  <span class="item-title">JobTrack — Job Application Tracker</span><span class="item-date">Oct 2023 – Dec 2023</span>
+  <ul>
+    <li>SaaS app built with Next.js and PostgreSQL for tracking job applications with Kanban board UI.</li>
+    <li>Integrated with LinkedIn API for auto-filling job details. 200+ registered users.</li>
+  </ul>
+</div>
+
+<div class="section-title">Open Source &amp; Achievements</div>
+<ul>
+  <li>Open Source Contributor: 8 merged PRs to Next.js, Prisma, and tRPC repositories</li>
+  <li>Google Summer of Code 2024 – Selected contributor (NumPy org)</li>
+  <li>2nd Place — MNIT Hackathon 2023 (Smart City theme)</li>
+</ul>
+
+</body>
+</html>

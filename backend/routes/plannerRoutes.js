@@ -5,7 +5,8 @@ import {
   createTask,
   updateTask,
   deleteTask,
-  createCalendarEvent
+  createCalendarEvent,
+  generateDailyScheduleController
 } from "../controllers/plannerController.js";
 
 const router = express.Router();
@@ -14,6 +15,7 @@ const router = express.Router();
 router.use(protect);
 
 router.get("/planner-data", getPlannerData);
+router.post("/planner/generate-daily", generateDailyScheduleController);
 router.post("/tasks", createTask);
 router.put("/tasks/:id", updateTask);
 router.delete("/tasks/:id", deleteTask);

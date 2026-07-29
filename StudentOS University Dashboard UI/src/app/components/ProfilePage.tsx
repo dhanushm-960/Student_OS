@@ -20,8 +20,9 @@ function EditProfileModal({ profile, onClose, onSuccess }: EditProfileModalProps
   const [projects, setProjects] = useState(profile.projects || "");
   const [careerGoal, setCareerGoal] = useState(profile.careerGoal || "");
   const [skills, setSkills] = useState(Array.isArray(profile.skills) ? profile.skills.join(", ") : "");
-  const [studyPreferences, setStudyPreferences] = useState(profile.studyPreferences || "Visual / Project-oriented");
-  const [availableStudyHours, setAvailableStudyHours] = useState(profile.availableStudyHours || "4");
+  const [studyPreferences, setStudyPreferences] = useState(profile.studyPreferences || "");
+  const [github, setGithub] = useState(profile.github || "");
+  const [linkedIn, setLinkedIn] = useState(profile.linkedIn || "");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +48,8 @@ function EditProfileModal({ profile, onClose, onSuccess }: EditProfileModalProps
           careerGoal,
           skills: skills.split(",").map((s: string) => s.trim()).filter(Boolean),
           studyPreferences,
-          availableStudyHours: Number(availableStudyHours)
+          github,
+          linkedIn
         }),
       });
       onSuccess();
@@ -192,28 +194,16 @@ function EditProfileModal({ profile, onClose, onSuccess }: EditProfileModalProps
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">Career Goal</label>
-              <input
-                type="text"
-                value={careerGoal}
-                onChange={(e) => setCareerGoal(e.target.value)}
-                placeholder="Software Engineer"
-                className="w-full px-3 py-2 rounded-xl border border-white/10 bg-slate-900/40 text-white text-sm focus:outline-none focus:border-indigo-500"
-                disabled={loading}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">Available Study Hours</label>
-              <input
-                type="number"
-                value={availableStudyHours}
-                onChange={(e) => setAvailableStudyHours(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-white/10 bg-slate-900/40 text-white text-sm focus:outline-none focus:border-indigo-500"
-                disabled={loading}
-              />
-            </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-300 block mb-1">Career Goal</label>
+            <input
+              type="text"
+              value={careerGoal}
+              onChange={(e) => setCareerGoal(e.target.value)}
+              placeholder="Software Engineer"
+              className="w-full px-3 py-2 rounded-xl border border-white/10 bg-slate-900/40 text-white text-sm focus:outline-none focus:border-indigo-500"
+              disabled={loading}
+            />
           </div>
 
           <div>
@@ -240,6 +230,31 @@ function EditProfileModal({ profile, onClose, onSuccess }: EditProfileModalProps
             />
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-slate-300 block mb-1">GitHub Profile</label>
+              <input
+                type="text"
+                value={github}
+                onChange={(e) => setGithub(e.target.value)}
+                placeholder="https://github.com/..."
+                className="w-full px-3 py-2 rounded-xl border border-white/10 bg-slate-900/40 text-white text-sm focus:outline-none focus:border-indigo-500"
+                disabled={loading}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-300 block mb-1">LinkedIn Profile</label>
+              <input
+                type="text"
+                value={linkedIn}
+                onChange={(e) => setLinkedIn(e.target.value)}
+                placeholder="https://linkedin.com/in/..."
+                className="w-full px-3 py-2 rounded-xl border border-white/10 bg-slate-900/40 text-white text-sm focus:outline-none focus:border-indigo-500"
+                disabled={loading}
+              />
+            </div>
+          </div>
+
           <div className="flex justify-end gap-3 pt-4 border-t border-white/5 mt-5">
             <button
               type="button"
@@ -262,13 +277,6 @@ function EditProfileModal({ profile, onClose, onSuccess }: EditProfileModalProps
     </div>
   );
 }
-
-/* ─── Profile Timeline Configuration ─── */
-const timeline = [
-  { title: "Updated portfolio", date: "Today" },
-  { title: "Signed up for mock interview", date: "Yesterday" },
-  { title: "Completed AI ethics assignment", date: "2 days ago" },
-];
 
 /* ─── Main Profile Page Component ─── */
 export function ProfilePage() {
@@ -397,7 +405,7 @@ export function ProfilePage() {
             </span>
           </div>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-3xl bg-slate-50 p-5">
               <div className="flex items-center gap-3 text-slate-600">
                 <Mail size={16} />
@@ -417,14 +425,36 @@ export function ProfilePage() {
                 <MapPin size={16} />
                 <span className="text-sm">Location</span>
               </div>
-              <p className="mt-3 text-sm text-slate-900">{profile.location || "Unspecified (Click Edit Profile)"}</p>
+              <p className="mt-3 text-sm text-slate-900">{profile.location || "Unspecified"}</p>
             </div>
             <div className="rounded-3xl bg-slate-50 p-5">
               <div className="flex items-center gap-3 text-slate-600">
                 <GraduationCap size={16} />
                 <span className="text-sm">Major</span>
               </div>
-              <p className="mt-3 text-sm text-slate-900">{profile.major || "Unspecified (Click Edit Profile)"}</p>
+              <p className="mt-3 text-sm text-slate-900">{profile.major || "Unspecified"}</p>
+            </div>
+            <div className="rounded-3xl bg-slate-50 p-5">
+              <div className="flex items-center gap-3 text-slate-600">
+                <FileText size={16} />
+                <span className="text-sm">LinkedIn</span>
+              </div>
+              {profile.linkedIn ? (
+                <a href={profile.linkedIn} target="_blank" rel="noreferrer" className="mt-3 block text-sm text-indigo-600 hover:underline truncate">{profile.linkedIn}</a>
+              ) : (
+                <p className="mt-3 text-sm text-slate-400">Not added</p>
+              )}
+            </div>
+            <div className="rounded-3xl bg-slate-50 p-5">
+              <div className="flex items-center gap-3 text-slate-600">
+                <FileText size={16} />
+                <span className="text-sm">GitHub</span>
+              </div>
+              {profile.github ? (
+                <a href={profile.github} target="_blank" rel="noreferrer" className="mt-3 block text-sm text-indigo-600 hover:underline truncate">{profile.github}</a>
+              ) : (
+                <p className="mt-3 text-sm text-slate-400">Not added</p>
+              )}
             </div>
           </div>
         </div>
@@ -440,11 +470,6 @@ export function ProfilePage() {
             <div className="rounded-3xl bg-slate-50 p-5">
               <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Target Career Goal</p>
               <p className="text-sm font-semibold text-slate-800">{profile.careerGoal || "Software Engineer"}</p>
-            </div>
-
-            <div className="rounded-3xl bg-slate-50 p-5">
-              <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Daily Available Study Hours</p>
-              <p className="text-sm font-semibold text-slate-800">{profile.availableStudyHours || 4} hours / day</p>
             </div>
 
             <div className="rounded-3xl bg-slate-50 p-5">
@@ -469,28 +494,7 @@ export function ProfilePage() {
           </div>
         </div>
 
-        {/* Timeline */}
-        <div className="rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-sm shadow-slate-950/5">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold text-slate-500">Activity timeline</p>
-              <p className="text-xs text-slate-400">Recent activity on your portal.</p>
-            </div>
-          </div>
-          <div className="mt-6 space-y-4">
-            {timeline.map((item) => (
-              <div key={item.title} className="flex items-center gap-4 rounded-3xl bg-slate-50 p-4">
-                <div className="rounded-2xl bg-indigo-500/10 p-3 text-indigo-600">
-                  <FileText size={18} />
-                </div>
-                <div>
-                  <p className="font-semibold text-slate-900">{item.title}</p>
-                  <p className="text-sm text-slate-500">{item.date}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+
       </div>
 
       <aside className="space-y-6">

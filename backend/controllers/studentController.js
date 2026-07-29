@@ -29,11 +29,11 @@ export const getOwnProfile = async (req, res, next) => {
         name: profile.user?.name || "",
         email: profile.user?.email || "",
         roll: profile.rollNumber,
-        dept: profile.department,
+        dept: profile.major, // Alias dept to major to prevent breaking old code
+        minor: profile.minor,
         year: profile.year,
         gpa: profile.gpa,
         attendance: profile.attendance,
-        dsa: profile.dsaProgress,
         projects: profile.projectsCompleted,
         placement: profile.placementReadiness,
         goals: profile.goalProgress,
@@ -49,8 +49,9 @@ export const getOwnProfile = async (req, res, next) => {
         skills: profile.skills || [],
         linkedIn: profile.linkedIn || "",
         github: profile.github || "",
-        placementBreakdown: profile.placementBreakdown || { resume: 0, projects: 0, dsa: 0, communication: 0 },
+        placementBreakdown: profile.placementBreakdown || { resume: 0, projects: 0, communication: 0 },
         setupCompleted: profile.setupCompleted || false,
+        studyAvailability: profile.studyAvailability || { dailyHours: 4, timeWindows: [{ startTime: "18:00", endTime: "22:00" }] },
         resumeDetails: profile.resumeDetails || { score: 0, skills: [], education: "", projects: [], technologies: [], suggestions: [], fileName: "" },
         placementPrediction: profile.placementPrediction || { potential: "Medium", score: 50, recs: [] },
       },
@@ -71,6 +72,7 @@ export const updateOwnProfile = async (req, res, next) => {
     phone,
     location,
     major,
+    minor,
     completedCredits,
     gpa,
     projectsCompleted,
@@ -83,7 +85,7 @@ export const updateOwnProfile = async (req, res, next) => {
     github,
     setupCompleted,
     studyPreferences,
-    availableStudyHours,
+    studyAvailability,
   } = req.body;
 
   try {
@@ -96,11 +98,9 @@ export const updateOwnProfile = async (req, res, next) => {
       profile = new StudentProfile({
         user: req.user._id,
         rollNumber,
-        department: "CSE",
         year: 1,
         gpa: 0,
         attendance: 0,
-        dsaProgress: 0,
         projectsCompleted: 0,
         placementReadiness: 0,
         goalProgress: 0,
@@ -110,6 +110,7 @@ export const updateOwnProfile = async (req, res, next) => {
         phone: "",
         location: "",
         major: "",
+        minor: "",
         completedCredits: 0,
         resumeVersion: "v1.0",
         setupCompleted: false,
@@ -128,24 +129,11 @@ export const updateOwnProfile = async (req, res, next) => {
 
     // Update fields in StudentProfile
     if (university !== undefined) profile.university = university;
-    if (degree !== undefined) {
-      profile.degree = degree;
-      const lowerDegree = degree.toLowerCase();
-      if (lowerDegree.includes("computer") || lowerDegree.includes("data science") || lowerDegree.includes("software")) {
-        profile.department = "CSE";
-      } else if (lowerDegree.includes("information technology")) {
-        profile.department = "IT";
-      } else if (lowerDegree.includes("electronics")) {
-        profile.department = "Electronics";
-      } else if (lowerDegree.includes("mechanical")) {
-        profile.department = "Mechanical";
-      } else if (lowerDegree.includes("civil")) {
-        profile.department = "Civil";
-      }
-    }
+    if (degree !== undefined) profile.degree = degree;
     if (phone !== undefined) profile.phone = phone;
     if (location !== undefined) profile.location = location;
     if (major !== undefined) profile.major = major;
+    if (minor !== undefined) profile.minor = minor;
     if (completedCredits !== undefined) profile.completedCredits = Number(completedCredits);
     if (gpa !== undefined) profile.gpa = Number(gpa);
     if (projectsCompleted !== undefined) profile.projectsCompleted = Number(projectsCompleted);
@@ -156,7 +144,7 @@ export const updateOwnProfile = async (req, res, next) => {
     if (linkedIn !== undefined) profile.linkedIn = linkedIn;
     if (github !== undefined) profile.github = github;
     if (studyPreferences !== undefined) profile.studyPreferences = studyPreferences;
-    if (availableStudyHours !== undefined) profile.availableStudyHours = Number(availableStudyHours);
+    if (studyAvailability !== undefined) profile.studyAvailability = studyAvailability;
     if (setupCompleted !== undefined) profile.setupCompleted = !!setupCompleted;
     if (skills !== undefined) {
       if (Array.isArray(skills)) {
@@ -169,33 +157,45 @@ export const updateOwnProfile = async (req, res, next) => {
     // Set metrics on onboarding completion
     if (isFirstTimeOnboarding) {
       profile.attendance = Math.floor(75 + Math.random() * 20);
-      profile.dsaProgress = Math.floor(25 + Math.random() * 30);
       profile.goalProgress = Math.floor(30 + Math.random() * 30);
 
       const actualGpa = gpa !== undefined ? Number(gpa) : (profile.gpa || 0.0);
       const actualProjects = projectsCompleted !== undefined ? Number(projectsCompleted) : (profile.projectsCompleted || 0);
 
-      const gpaWeight = actualGpa * 6;
-      const projWeight = Math.min(20, actualProjects * 7);
-      const dsaWeight = profile.dsaProgress * 0.2;
-      profile.placementReadiness = Math.round(gpaWeight + projWeight + dsaWeight);
+      const gpaWeight = actualGpa * 8; // Boost GPA weight to compensate for removed DSA
+      const projWeight = Math.min(10, actualProjects * 10); // Stricter project weight at onboarding
+      profile.placementReadiness = Math.round(gpaWeight + projWeight);
 
       profile.placementBreakdown = {
         resume: Math.floor(55 + Math.random() * 30),
         projects: Math.min(100, actualProjects * 30 + Math.floor(Math.random() * 20)),
-        dsa: profile.dsaProgress,
         communication: Math.floor(60 + Math.random() * 30),
       };
 
       profile.aiRecommendations = [
         "Improve your Resume score by participating in hackathons",
-        "Keep practicing DSA problems daily to boost your coding score",
         "Review your placement readiness with academic mentors"
       ];
     }
 
     if (gpa !== undefined && Number(gpa) !== oldProfile.gpa) {
       await logStudentMatchAudit(oldProfile, profile, "gpa_updated");
+    }
+
+    // Apply GitHub/LinkedIn bonus to Placement Readiness (if added post-onboarding)
+    if (!isFirstTimeOnboarding) {
+      const prevGithub = oldProfile.github || "";
+      const prevLinkedIn = oldProfile.linkedIn || "";
+      const newGithub = profile.github || "";
+      const newLinkedIn = profile.linkedIn || "";
+      
+      let bonus = 0;
+      if (newGithub && !prevGithub) bonus += 5; // +5 points for adding GitHub
+      if (newLinkedIn && !prevLinkedIn) bonus += 5; // +5 points for adding LinkedIn
+      
+      if (bonus > 0) {
+        profile.placementReadiness = Math.min(100, (profile.placementReadiness || 0) + bonus);
+      }
     }
 
     // Save updated profile
@@ -219,7 +219,6 @@ export const updateOwnProfile = async (req, res, next) => {
         year: updated.year,
         gpa: updated.gpa,
         attendance: updated.attendance,
-        dsa: updated.dsaProgress,
         projects: updated.projectsCompleted,
         placement: updated.placementReadiness,
         goals: updated.goalProgress,
@@ -235,7 +234,7 @@ export const updateOwnProfile = async (req, res, next) => {
         skills: updated.skills || [],
         linkedIn: updated.linkedIn || "",
         github: updated.github || "",
-        placementBreakdown: updated.placementBreakdown || { resume: 0, projects: 0, dsa: 0, communication: 0 },
+        placementBreakdown: updated.placementBreakdown || { resume: 0, projects: 0, communication: 0 },
         setupCompleted: updated.setupCompleted || false,
       },
     });
@@ -624,38 +623,36 @@ export const recalculatePlacement = async (req, res, next) => {
     if (resumeScore === 0) {
       resumeScore = 40;
       if (profile.skills && profile.skills.length > 0) resumeScore += Math.min(20, profile.skills.length * 5);
-      if (profile.linkedIn) resumeScore += 10;
-      if (profile.github) resumeScore += 10;
       if (profile.careerGoal) resumeScore += 10;
       if (profile.resumeVersion && profile.resumeVersion !== "v1.0") resumeScore += 10;
+      // Note: github/linkedin removed from fallback to prevent double counting, they add raw bonus below
     }
     resumeScore = Math.min(100, resumeScore);
 
     // Projects score: based on actual project count
-    const projectsScore = Math.min(100, projectCount * 25);
-
-    // DSA score: already tracked
-    const dsaScore = profile.dsaProgress || 0;
+    const projectsScore = Math.min(100, (profile.projectsCompleted || 0) * 15);
 
     // Communication score: composite of attendance + goal completion
     const avgGoalProgress = goalsList.length > 0
       ? Math.round(goalsList.reduce((acc, g) => acc + g.progress, 0) / goalsList.length)
       : 0;
-    const communicationScore = Math.min(100, Math.round((profile.attendance * 0.4) + (avgGoalProgress * 0.3) + (profile.gpa * 3)));
+    const commScore = Math.min(100, Math.round((profile.attendance * 0.4) + (avgGoalProgress * 0.3) + (profile.gpa * 3)));
 
-    // Overall placement readiness: weighted average
-    const overallPlacement = Math.round(
-      (resumeScore * 0.25) +
+    // Compute Overall metrics (Stricter, more realistic model)
+    // Resume (50%), Projects (25%), Communication (25%)
+    let overallPlacement = Math.round(
+      (resumeScore * 0.50) +
       (projectsScore * 0.25) +
-      (dsaScore * 0.30) +
-      (communicationScore * 0.20)
+      (commScore * 0.25)
     );
+
+    if (profile.github) overallPlacement = Math.min(100, overallPlacement + 5);
+    if (profile.linkedIn) overallPlacement = Math.min(100, overallPlacement + 5);
 
     profile.placementBreakdown = {
       resume: resumeScore,
       projects: projectsScore,
-      dsa: dsaScore,
-      communication: communicationScore,
+      communication: commScore
     };
     profile.placementReadiness = overallPlacement;
     profile.projectsCompleted = projectCount;

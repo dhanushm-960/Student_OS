@@ -33,6 +33,14 @@ const companySchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    eligibleMajors: {
+      type: [String],
+      default: ["ALL"],
+    },
+    eligibleMinors: {
+      type: [String],
+      default: [],
+    },
     logo: {
       type: String,
       default: "🏢",

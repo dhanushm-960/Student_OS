@@ -12,6 +12,11 @@ const studentTaskSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    description: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     category: {
       type: String,
       enum: ["Assignment", "Project", "Exam", "Placement Prep", "Personal Study", "General"],
@@ -38,6 +43,11 @@ const studentTaskSchema = new mongoose.Schema(
     placementImpact: {
       type: Number, // 1 to 10 scale
       default: 5,
+    },
+    source: {
+      type: String,
+      enum: ["manual", "ai_generated"],
+      default: "manual",
     },
   },
   {

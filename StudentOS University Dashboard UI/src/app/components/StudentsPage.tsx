@@ -48,8 +48,7 @@ function AddStudentModal({ onClose, onSuccess }: { onClose: () => void; onSucces
   const [year, setYear] = useState("1");
   const [gpa, setGpa] = useState("8.0");
   const [attendance, setAttendance] = useState("85");
-  const [dsaProgress, setDsaProgress] = useState("70");
-  const [projectsCompleted, setProjectsCompleted] = useState("3");
+  const [projectsCompleted, setProjectsCompleted] = useState("2");
   const [placementReadiness, setPlacementReadiness] = useState("75");
   const [goalProgress, setGoalProgress] = useState("80");
   const [riskLevel, setRiskLevel] = useState("Low");
@@ -89,7 +88,6 @@ function AddStudentModal({ onClose, onSuccess }: { onClose: () => void; onSucces
           year: Number(year),
           gpa: Number(gpa),
           attendance: Number(attendance),
-          dsaProgress: Number(dsaProgress),
           projectsCompleted: Number(projectsCompleted),
           placementReadiness: Number(placementReadiness),
           goalProgress: Number(goalProgress),
@@ -226,18 +224,6 @@ function AddStudentModal({ onClose, onSuccess }: { onClose: () => void; onSucces
           </div>
 
           <div className="grid grid-cols-3 gap-2">
-            <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">DSA Progress (%)</label>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                value={dsaProgress}
-                onChange={(e) => setDsaProgress(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-white/10 bg-slate-900/40 text-white text-sm focus:outline-none"
-                disabled={loading}
-              />
-            </div>
             <div>
               <label className="text-xs font-semibold text-slate-300 block mb-1">Placement (%)</label>
               <input
@@ -410,7 +396,7 @@ function StudentProfileModal({ student, onClose, onDelete }: { student: any; onC
           {[
             { label: "Placement Readiness", value: `${displayStudent.placement}%`, icon: Target, color: C.indigo, bg: "#EEF2FF" },
             { label: "Attendance", value: `${displayStudent.attendance}%`, icon: BookOpen, color: C.green, bg: "#ECFDF5" },
-            { label: "DSA Progress", value: `${displayStudent.dsa}%`, icon: Code, color: C.purple, bg: "#F5F3FF" },
+            { label: "Goals Met", value: `${displayStudent.goals}%`, icon: Code, color: C.purple, bg: "#F5F3FF" },
             { label: "Projects Completed", value: `${displayStudent.projects}`, icon: Star, color: C.amber, bg: "#FFFBEB" },
             { label: "Goal Progress", value: `${displayStudent.goals}%`, icon: TrendingUp, color: C.cyan, bg: "#ECFEFF" },
             { label: "Academic Score", value: `${displayStudent.gpa}/10`, icon: User, color: C.rose, bg: "#FFF1F2" },
@@ -467,7 +453,7 @@ function StudentProfileModal({ student, onClose, onDelete }: { student: any; onC
             {[
               { label: "Resume", value: displayStudent.placementBreakdown?.resume || 0, color: C.indigo },
               { label: "Projects", value: displayStudent.placementBreakdown?.projects || 0, color: C.green },
-              { label: "DSA & Coding", value: displayStudent.placementBreakdown?.dsa || 0, color: C.purple },
+              { label: "Communication", value: displayStudent.placementBreakdown?.communication || 0, color: C.purple },
               { label: "Communication", value: displayStudent.placementBreakdown?.communication || 0, color: C.cyan },
             ].map((item) => (
               <div key={item.label}>
@@ -537,11 +523,6 @@ function StudentProfileModal({ student, onClose, onDelete }: { student: any; onC
                 ))
               ) : (
                 <>
-                  {displayStudent.dsa < 70 && (
-                    <li className="text-xs" style={{ color: "#4338CA" }}>
-                      • Complete DSA practice problems daily — target 5 LeetCode problems/week
-                    </li>
-                  )}
                   {displayStudent.attendance < 75 && (
                     <li className="text-xs" style={{ color: "#4338CA" }}>
                       • Attendance below threshold — schedule advisor meeting immediately

@@ -20,6 +20,14 @@ const recruitmentDriveSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    eligibleMajors: {
+      type: [String],
+      default: ["ALL"],
+    },
+    eligibleMinors: {
+      type: [String],
+      default: [],
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

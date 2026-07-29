@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { 
   Briefcase, TrendingUp, CheckCircle2, ClipboardList, ShieldCheck, 
-  Upload, FileText, Sparkles, Building2, Check, AlertCircle, ArrowUpRight, Crosshair
+  Upload, FileText, Sparkles, Building2, Check, AlertCircle, ArrowUpRight, Crosshair, Zap
 } from "lucide-react";
 import { apiRequest } from "../utils/api";
 
@@ -363,8 +363,14 @@ export function CareerIntelligencePage() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg font-bold text-slate-900">AI Resume Analysis</h3>
-                <p className="text-xs text-slate-400">Upload PDF resume to extract skills.</p>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-slate-900">AI Resume Analysis</h3>
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded border border-orange-500/30 bg-orange-500/10 text-orange-600 text-[10px] font-bold tracking-wider">
+                    <Zap size={10} fill="currentColor" />
+                    POWERED BY GROQ
+                  </div>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">Upload PDF resume to extract skills.</p>
               </div>
               <Sparkles size={18} className="text-indigo-500" />
             </div>
@@ -668,6 +674,23 @@ export function CareerIntelligencePage() {
                       </p>
                     )}
                     <p className="text-slate-500">Recommendation: {company.recommendation}</p>
+                    
+                    {company.majorFitNote && (
+                      <div className={`mt-2 p-2.5 rounded-xl border flex gap-2 ${
+                        company.majorFitTier === "minor_match" 
+                          ? "bg-indigo-50/50 border-indigo-100 text-indigo-700"
+                          : "bg-amber-50/50 border-amber-100 text-amber-700"
+                      }`}>
+                        {company.majorFitTier === "minor_match" ? (
+                          <Sparkles size={12} className="shrink-0 mt-0.5 text-indigo-500" />
+                        ) : (
+                          <AlertCircle size={12} className="shrink-0 mt-0.5 text-amber-500" />
+                        )}
+                        <p className="font-medium text-[0.7rem] leading-relaxed">
+                          {company.majorFitNote}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))

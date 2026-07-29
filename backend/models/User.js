@@ -31,6 +31,9 @@ const userSchema = new mongoose.Schema(
       enum: ["student", "admin"],
       default: "student",
     },
+    passwordChangedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
@@ -45,6 +48,10 @@ userSchema.pre("save", async function (next) {
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
+    // If this is an existing document and the password was modified, set passwordChangedAt
+    if (!this.isNew) {
+      this.passwordChangedAt = Date.now() - 1000; // Subtract 1s to ensure it's before token iat
+    }
     next();
   } catch (error) {
     next(error);

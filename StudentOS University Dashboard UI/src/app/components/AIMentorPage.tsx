@@ -6,7 +6,7 @@ const suggestedPrompts = [
   "How should I prepare for my next AI interview?",
   "Create a study plan for the next 7 days.",
   "Suggest resources for SQL and database design.",
-  "Help me improve my DSA problem-solving skills.",
+  "Help me review my placement readiness checklist.",
 ];
 
 const quickActions = [
