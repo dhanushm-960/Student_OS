@@ -29,7 +29,7 @@ export function AdminDrivesPage() {
 
   const fetchDrives = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/admin/drives", {
+      const res = await fetch("${import.meta.env.VITE_API_URL}/api/admin/drives", {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -43,7 +43,7 @@ export function AdminDrivesPage() {
 
   const fetchCompanies = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/admin/companies", {
+      const res = await fetch("${import.meta.env.VITE_API_URL}/api/admin/companies", {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -56,7 +56,7 @@ export function AdminDrivesPage() {
   const handleCreateDrive = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/api/admin/drives", {
+      const res = await fetch("${import.meta.env.VITE_API_URL}/api/admin/drives", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -81,7 +81,7 @@ export function AdminDrivesPage() {
 
   const fetchApplications = async (driveId: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/drives/${driveId}/applications`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/drives/${driveId}/applications`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -93,7 +93,7 @@ export function AdminDrivesPage() {
 
   const handleUpdateStatus = async (appId: string, status: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/applications/${appId}/status`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/applications/${appId}/status`, {
         method: "PUT",
         headers: { 
           "Content-Type": "application/json",
@@ -217,7 +217,7 @@ export function AdminDrivesPage() {
                               return (
                                 <button 
                                   key={stage}
-                                  onClick={() => setViewProofUrl(`http://localhost:5000${proof.fileUrl}`)}
+                                  onClick={() => setViewProofUrl(`${import.meta.env.VITE_API_URL}${proof.fileUrl}`)}
                                   className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center hover:bg-indigo-500/20"
                                   title={`View ${stage} proof`}
                                 >

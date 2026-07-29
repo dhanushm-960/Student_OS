@@ -23,10 +23,10 @@ export function StudentDrivesPage() {
   const fetchData = async () => {
     try {
       const [drivesRes, appsRes] = await Promise.all([
-        fetch("http://localhost:5000/api/student/drives", {
+        fetch("${import.meta.env.VITE_API_URL}/api/student/drives", {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        fetch("http://localhost:5000/api/student/applications", {
+        fetch("${import.meta.env.VITE_API_URL}/api/student/applications", {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -44,7 +44,7 @@ export function StudentDrivesPage() {
 
   const handleApply = async (driveId: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/student/drives/${driveId}/apply`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/student/drives/${driveId}/apply`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -69,7 +69,7 @@ export function StudentDrivesPage() {
     formData.append("stage", stage);
 
     try {
-      const res = await fetch(`http://localhost:5000/api/student/applications/${appId}/proof`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/student/applications/${appId}/proof`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData
@@ -218,7 +218,7 @@ export function StudentDrivesPage() {
                             <span className="text-xs text-slate-500 mr-2">
                               Uploaded {format(new Date(existingProof.uploadedAt), "MMM dd")}
                             </span>
-                            <a href={`http://localhost:5000${existingProof.fileUrl}`} target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 text-sm font-500">
+                            <a href={`${import.meta.env.VITE_API_URL}${existingProof.fileUrl}`} target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 text-sm font-500">
                               View Image
                             </a>
                           </div>
