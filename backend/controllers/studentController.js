@@ -22,39 +22,51 @@ export const getOwnProfile = async (req, res, next) => {
       throw new Error("Student profile not found.");
     }
 
+    const responseProfile = {
+      id: profile._id,
+      name: profile.user?.name || "",
+      email: profile.user?.email || "",
+      roll: profile.rollNumber,
+      dept: profile.major, // Alias dept to major to prevent breaking old code
+      minor: profile.minor,
+      year: profile.year,
+      gpa: profile.gpa,
+      attendance: profile.attendance,
+      projects: profile.projectsCompleted,
+      placement: profile.placementReadiness,
+      goals: profile.goalProgress,
+      risk: profile.riskLevel,
+      university: profile.university,
+      degree: profile.degree,
+      phone: profile.phone,
+      location: profile.location,
+      major: profile.major,
+      completedCredits: profile.completedCredits,
+      resumeVersion: profile.resumeVersion,
+      careerGoal: profile.careerGoal || "",
+      skills: profile.skills || [],
+      linkedIn: profile.linkedIn || "",
+      github: profile.github || "",
+      setupCompleted: profile.setupCompleted || false,
+      studyAvailability: profile.studyAvailability || { dailyHours: 4, timeWindows: [{ startTime: "18:00", endTime: "22:00" }] },
+      resumeDetails: profile.resumeDetails || { score: 0, skills: [], education: "", projects: [], technologies: [], suggestions: [], fileName: "" },
+      placementPrediction: profile.placementPrediction || { potential: "Medium", score: 50, recs: [] },
+    };
+
+    // Override placementBreakdown with dynamic realistic values
+    const gpaPercent = Math.min(100, (profile.gpa / 10) * 100);
+    const projPercent = Math.min(100, profile.projectsCompleted * 20); // 5 projects = 100%
+    const resPercent = profile.resumeDetails?.score || profile.placementBreakdown?.resume || Math.round(profile.placementReadiness * 0.4);
+    
+    responseProfile.placementBreakdown = {
+      resume: Math.round(resPercent),
+      projects: Math.round(projPercent),
+      academics: Math.round(gpaPercent),
+    };
+
     res.json({
       success: true,
-      profile: {
-        id: profile._id,
-        name: profile.user?.name || "",
-        email: profile.user?.email || "",
-        roll: profile.rollNumber,
-        dept: profile.major, // Alias dept to major to prevent breaking old code
-        minor: profile.minor,
-        year: profile.year,
-        gpa: profile.gpa,
-        attendance: profile.attendance,
-        projects: profile.projectsCompleted,
-        placement: profile.placementReadiness,
-        goals: profile.goalProgress,
-        risk: profile.riskLevel,
-        university: profile.university,
-        degree: profile.degree,
-        phone: profile.phone,
-        location: profile.location,
-        major: profile.major,
-        completedCredits: profile.completedCredits,
-        resumeVersion: profile.resumeVersion,
-        careerGoal: profile.careerGoal || "",
-        skills: profile.skills || [],
-        linkedIn: profile.linkedIn || "",
-        github: profile.github || "",
-        placementBreakdown: profile.placementBreakdown || { resume: 0, projects: 0, communication: 0 },
-        setupCompleted: profile.setupCompleted || false,
-        studyAvailability: profile.studyAvailability || { dailyHours: 4, timeWindows: [{ startTime: "18:00", endTime: "22:00" }] },
-        resumeDetails: profile.resumeDetails || { score: 0, skills: [], education: "", projects: [], technologies: [], suggestions: [], fileName: "" },
-        placementPrediction: profile.placementPrediction || { potential: "Medium", score: 50, recs: [] },
-      },
+      profile: responseProfile,
     });
   } catch (error) {
     next(error);

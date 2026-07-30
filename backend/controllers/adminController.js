@@ -301,6 +301,21 @@ export const getStudents = async (req, res, next) => {
       placementPrediction: s.placementPrediction || { potential: "Medium", score: 50, recs: [] },
     }));
 
+    // Override placementBreakdown with dynamic realistic values if missing or hardcoded
+    formattedStudents = formattedStudents.map(s => {
+      const gpaPercent = Math.min(100, (s.gpa / 10) * 100);
+      const projPercent = Math.min(100, s.projects * 20); // 5 projects = 100%
+      const resPercent = s.resumeDetails?.score || s.placementBreakdown?.resume || Math.round(s.placement * 0.4);
+      return {
+        ...s,
+        placementBreakdown: {
+          resume: Math.round(resPercent),
+          projects: Math.round(projPercent),
+          academics: Math.round(gpaPercent),
+        }
+      };
+    });
+
     res.json({
       success: true,
       students: formattedStudents,
@@ -322,10 +337,8 @@ export const getStudentById = async (req, res, next) => {
       throw new Error("Student not found.");
     }
 
-    res.json({
-      success: true,
-      student: {
-        id: student._id,
+    const responseStudent = {
+      id: student._id,
         name: student.user?.name || "Unknown",
         email: student.user?.email || "",
         roll: student.rollNumber,
@@ -346,8 +359,23 @@ export const getStudentById = async (req, res, next) => {
         github: student.github || "",
         resumeDetails: student.resumeDetails || { score: 0, skills: [], education: "", projects: [], technologies: [], suggestions: [], fileName: "" },
         placementPrediction: student.placementPrediction || { potential: "Medium", score: 50, recs: [] },
-      },
-    });
+      };
+
+      // Override placementBreakdown with dynamic realistic values
+      const gpaPercent = Math.min(100, (student.gpa / 10) * 100);
+      const projPercent = Math.min(100, student.projectsCompleted * 20); // 5 projects = 100%
+      const resPercent = student.resumeDetails?.score || student.placementBreakdown?.resume || Math.round(student.placementReadiness * 0.4);
+      
+      responseStudent.placementBreakdown = {
+        resume: Math.round(resPercent),
+        projects: Math.round(projPercent),
+        academics: Math.round(gpaPercent),
+      };
+
+      res.json({
+        success: true,
+        student: responseStudent,
+      });
   } catch (error) {
     next(error);
   }
