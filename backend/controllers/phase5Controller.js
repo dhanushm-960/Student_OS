@@ -12,6 +12,7 @@ import { logStudentMatchAudit, logCompanyMatchAudit } from "../utils/auditTrail.
 import MatchScoreHistory from "../models/MatchScoreHistory.js";
 import { validateMatchesWithMarket } from "../services/marketValidationService.js";
 import { MarketSummary } from "../models/MarketIntelligence.js";
+import { fetchGithubStats } from "../services/githubService.js";
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const pdfParse = require('pdf-parse');
@@ -167,12 +168,25 @@ export const uploadResume = async (req, res, next) => {
     const { technicalSkills, softSkills, programmingLanguages, frameworks, libraries, tools, databases, certifications, education, projects, experience, github, linkedin } = extractedData;
     const combinedSkills = [...new Set([...(technicalSkills||[]), ...(programmingLanguages||[]), ...(frameworks||[]), ...(tools||[]), ...(databases||[])])];
 
+    let githubStats = null;
+    if (github) {
+      githubStats = await fetchGithubStats(github);
+    }
+
     // AI-driven Resume Scoring
     let score = extractedData.score || 50;
     let strength = extractedData.strength || "Needs Work";
+    
+    if (githubStats) {
+       // Boost score if they have active repo count
+       if (githubStats.reposCount >= 3) {
+          score = Math.min(100, score + 5);
+          strength = score > 80 ? "Strong" : score > 60 ? "Average" : "Needs Work";
+       }
+    }
 
     // Call Groq for Action Checklist
-    const actionChecklistData = await generateActionChecklist(extractedData, { studentProfile: profile });
+    const actionChecklistData = await generateActionChecklist(extractedData, { studentProfile: profile, githubStats });
     const finalChecklist = Array.isArray(actionChecklistData) ? actionChecklistData : [];
 
     profile.resumeDetails = {
@@ -195,7 +209,8 @@ export const uploadResume = async (req, res, next) => {
       linkedin,
       actionChecklist: finalChecklist,
       fileName,
-      uploadedAt: new Date()
+      uploadedAt: new Date(),
+      ...(githubStats && { githubStats })
     };
 
     // Replace skills from current resume (reset, not accumulate, so scores reflect THIS resume)

@@ -154,7 +154,14 @@ const studentProfileSchema = new mongoose.Schema(
       suggestions: { type: [String], default: [] },
       actionChecklist: { type: [String], default: [] },
       fileName: { type: String, default: "" },
-      uploadedAt: { type: Date }
+      uploadedAt: { type: Date },
+      githubStats: {
+        username: { type: String, default: "" },
+        reposCount: { type: Number, default: 0 },
+        followers: { type: Number, default: 0 },
+        totalStars: { type: Number, default: 0 },
+        topLanguages: { type: [String], default: [] }
+      }
     },
     skillGaps: {
       missingSkills: [{

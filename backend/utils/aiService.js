@@ -520,11 +520,13 @@ Return ONLY a valid JSON object:
 }
 Limit to top 5-6 actionable items.`;
 
+  const githubInfo = studentContext.githubStats ? `\nGitHub Profile Stats:\n- Total Public Repos: ${studentContext.githubStats.reposCount}\n- Total Stars: ${studentContext.githubStats.totalStars}\n- Top Languages: ${studentContext.githubStats.topLanguages?.join(", ") || "None"}` : "";
+
   const userPrompt = `Student Goal: ${studentContext.studentProfile.careerGoal}
 Resume Analysis JSON:
-${JSON.stringify(resumeAnalysis)}
+${JSON.stringify(resumeAnalysis)}${githubInfo}
 
-Suggest actionable improvements (e.g. Add measurable achievements, add GitHub profile).`;
+Suggest actionable improvements (e.g. Add measurable achievements, add GitHub profile). If GitHub stats exist, provide at least one recommendation based on their actual repositories and top languages (e.g. build more repos if count is low, or praise/utilize top languages).`;
 
   const schema = z.object({
     checklist: z.array(z.string())
