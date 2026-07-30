@@ -261,13 +261,16 @@ export const getDashboardStats = async (req, res, next) => {
 // @route   GET /api/admin/students
 // @access  Private/Admin
 export const getStudents = async (req, res, next) => {
-  const { search, dept } = req.query;
+  const { search, major, minor } = req.query;
 
   try {
     let query = {};
 
-    if (dept && dept !== "All") {
-      query.department = dept;
+    if (major && major !== "All") {
+      query.major = major;
+    }
+    if (minor && minor !== "All") {
+      query.minor = minor;
     }
 
     let students = await StudentProfile.find(query).populate("user", "name email");
@@ -286,7 +289,8 @@ export const getStudents = async (req, res, next) => {
       name: s.user?.name || "Unknown",
       email: s.user?.email || "",
       roll: s.rollNumber,
-      dept: s.department === "Electronics" ? "Electronics" : s.department === "Mechanical" ? "Mechanical" : s.department,
+      major: s.major || "N/A",
+      minor: s.minor || "N/A",
       year: s.year,
       gpa: s.gpa,
       attendance: s.attendance,

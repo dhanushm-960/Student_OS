@@ -11,7 +11,8 @@ const C = {
   cyan: "#06B6D4",
 };
 
-const departments = ["All", "CSE", "IT", "Electronics", "Mechanical", "Civil"];
+const majorsList = ["All", "Computer Science", "Artificial Intelligence", "Data Science", "Life Sciences", "Business", "Design"];
+const minorsList = ["All", "Computer Science", "Artificial Intelligence", "Data Science", "Life Sciences", "Business", "Design", "None"];
 
 const riskColors: Record<string, { bg: string; text: string }> = {
   Low: { bg: "#ECFDF5", text: "#059669" },
@@ -354,7 +355,7 @@ function StudentProfileModal({ student, onClose, onDelete }: { student: any; onC
               <h3 className="font-display text-white font-bold" style={{ fontSize: "1.125rem" }}>
                 {displayStudent.name}
               </h3>
-              <p className="text-indigo-300 text-sm mt-0.5">{displayStudent.roll} · {displayStudent.dept} · Year {displayStudent.year}</p>
+              <p className="text-indigo-300 text-sm mt-0.5">{displayStudent.roll} · Major: {displayStudent.major || 'N/A'} · Minor: {displayStudent.minor || 'None'} · Year {displayStudent.year}</p>
               <div className="flex gap-2 mt-2">
                 <span
                   className="text-xs px-2 py-0.5 rounded-full font-500"
@@ -673,7 +674,8 @@ function SendNotificationModal({ student, onClose }: { student: any; onClose: ()
 /* ─── Main Students Directory Page ─── */
 export function StudentsPage() {
   const [search, setSearch] = useState("");
-  const [dept, setDept] = useState("All");
+  const [majorFilter, setMajorFilter] = useState("All");
+  const [minorFilter, setMinorFilter] = useState("All");
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
   const [students, setStudents] = useState<any[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -686,7 +688,7 @@ export function StudentsPage() {
       setLoading(true);
       setError(null);
       const data = await apiRequest("/api/admin/students", {
-        params: { search, dept }
+        params: { search, major: majorFilter, minor: minorFilter }
       });
       setStudents(data.students);
     } catch (err: any) {
@@ -698,7 +700,7 @@ export function StudentsPage() {
 
   useEffect(() => {
     fetchStudents();
-  }, [search, dept]);
+  }, [search, majorFilter, minorFilter]);
 
   const handleDelete = async (id: string, name: string) => {
     if (confirm(`Are you sure you want to delete student ${name}?`)) {
@@ -795,21 +797,21 @@ export function StudentsPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex gap-1.5">
-              {departments.map((d) => (
-                <button
-                  key={d}
-                  onClick={() => setDept(d)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-500 transition-all cursor-pointer"
-                  style={{
-                    background: dept === d ? C.indigo : "#F8F9FF",
-                    color: dept === d ? "white" : "var(--muted-foreground)",
-                    border: `1px solid ${dept === d ? C.indigo : "rgba(79,70,229,0.1)"}`,
-                  }}
-                >
-                  {d}
-                </button>
-              ))}
+            <div className="flex gap-2">
+              <select
+                value={majorFilter}
+                onChange={(e) => setMajorFilter(e.target.value)}
+                className="px-3 py-1.5 rounded-lg text-xs font-500 bg-[#F8F9FF] text-[var(--foreground)] border border-indigo-500/10 focus:outline-none focus:border-indigo-500"
+              >
+                {majorsList.map(m => <option key={`maj-${m}`} value={m}>{m === 'All' ? 'All Majors' : m}</option>)}
+              </select>
+              <select
+                value={minorFilter}
+                onChange={(e) => setMinorFilter(e.target.value)}
+                className="px-3 py-1.5 rounded-lg text-xs font-500 bg-[#F8F9FF] text-[var(--foreground)] border border-indigo-500/10 focus:outline-none focus:border-indigo-500"
+              >
+                {minorsList.map(m => <option key={`min-${m}`} value={m}>{m === 'All' ? 'All Minors' : m}</option>)}
+              </select>
             </div>
             
             <button
