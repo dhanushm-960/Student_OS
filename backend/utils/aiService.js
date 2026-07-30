@@ -143,89 +143,6 @@ export const callAISafely = async (systemPrompt, userPrompt, schema, fallbackFn,
 
 // ──────────────────────────────────────────────────────────────
 // EXPOSED MODULAR INTERFACES
-// ──────────────────────────────────────────────────────────────
-
-/**
- * 1. Generate Placement Recommendations Card
- */
-export const generateRecommendation = async (studentContext) => {
-  const profile = studentContext.studentProfile;
-  const systemPrompt = `You are the StudentOS AI Placement Analyst. Based on the student's metrics, find the top 3 gaps and assign impact boosts.
-Return ONLY a valid JSON object matching this structure:
-{
-  "predictedAfterCompletion": 85,
-  "recommendations": [
-    {
-      "title": "Action title (e.g. Complete a portfolio Project)",
-      "explanation": "Brief explanation mapping back to matching companies requirements or career goals",
-      "impact": 6
-    }
-  ]
-}
-Do not write any other text or formatting. Just JSON.`;
-
-  const userPrompt = `Student Context:
-- Name: ${profile.name}
-- Career Goal: ${profile.careerGoal}
-- Placement Readiness: ${profile.placementReadiness}%
-- Resume Score: ${profile.resumeScore}%
-- CGPA: ${profile.gpa}/10
-- Skills: ${profile.skills.join(", ")}
-- Projects Count: ${studentContext.projects.length}
-- Companies Matches count: ${studentContext.recruiterData?.matches?.length || 0}
-
-Evaluate gap, assign readiness boosts (+3% to +10%) and output the JSON.`;
-
-  const schema = z.object({
-    predictedAfterCompletion: z.number(),
-    recommendations: z.array(z.object({
-      title: z.string(),
-      explanation: z.string(),
-      impact: z.number()
-    }))
-  });
-
-  const fallbackFn = () => {
-    console.log("ℹ️ [AI Service] generateRecommendation falling back to local engine.");
-    const allRecs = [];
-    if (profile.resumeScore < 85) {
-      allRecs.push({
-        title: "Improve your Resume",
-        explanation: "quantify project accomplishments and align terms with recruiter search requirements.",
-        impact: Math.max(2, Math.round((85 - profile.resumeScore) * 0.25))
-      });
-    }
-    if (studentContext.projects.length < 3) {
-      allRecs.push({
-        title: "Complete a portfolio Project",
-        explanation: `Hiring criteria for '${profile.careerGoal}' roles prioritize hands-on experience. Build another full stack application.`,
-        impact: 8
-      });
-    }
-    if (profile.skills.length < 5) {
-      allRecs.push({
-        title: "Master core technical skills",
-        explanation: "Deepen your understanding of your major's core concepts to excel in technical evaluations.",
-        impact: 6
-      });
-    }
-    if (allRecs.length === 0) {
-      allRecs.push({
-        title: "Schedule a Mock Interview",
-        explanation: "Practice behavior rounds and system architecture prep.",
-        impact: 4
-      });
-    }
-    const sumBoost = allRecs.reduce((acc, curr) => acc + curr.impact, 0);
-    return {
-      predictedAfterCompletion: Math.min(100, profile.placementReadiness + sumBoost),
-      recommendations: allRecs.slice(0, 3)
-    };
-  };
-
-  return await callAISafely(systemPrompt, userPrompt, schema, fallbackFn);
-};
-
 /**
  * 2. Generate Daily Reorganized Schedule Plan
  */
@@ -369,6 +286,8 @@ Student Context:
 - Resume Score: ${profile.resumeScore}%
 - Daily Study Limit: ${profile.availableStudyHours} hours
 - Skills: ${profile.skills.join(", ")}
+- GitHub Repositories: ${profile.resumeDetails?.githubStats?.reposCount || 0}
+- GitHub Stars: ${profile.resumeDetails?.githubStats?.totalStars || 0}
 
 Planner & Calendar:
 - Today's Tasks: ${(studentContext.planner?.todayTasks || []).map(t => t.title).join(", ") || "None"}

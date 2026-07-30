@@ -553,38 +553,7 @@ export function CareerIntelligencePage() {
             </div>
           </div>
 
-          {/* Personalized Market Insights */}
-          <div className="grid sm:grid-cols-2 gap-6">
-            <div className="rounded-3xl bg-white p-6 shadow-sm shadow-slate-200 border border-slate-100">
-              <h3 className="text-lg font-bold text-slate-900">Personalized Insights</h3>
-              <p className="text-xs text-slate-400 mt-1 mb-4">Your profile compared to today's market</p>
-              
-              <h4 className="text-sm font-semibold text-slate-900 mb-2">Student Missing</h4>
-              {profile?.marketIntelligence?.missingSkills?.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {profile.marketIntelligence.missingSkills.map((ms: string, idx: number) => (
-                    <span key={idx} className="px-3 py-1 rounded-lg bg-rose-50 text-rose-700 text-sm font-bold border border-rose-100">
-                      {ms}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-emerald-600 font-semibold flex items-center gap-2">
-                  <CheckCircle2 size={16} /> No top market skills missing!
-                </p>
-              )}
-            </div>
 
-            <div className="rounded-3xl bg-indigo-50 p-6 shadow-sm border border-indigo-100">
-              <h3 className="text-lg font-bold text-indigo-900 flex items-center gap-2">
-                <Sparkles size={20} className="text-indigo-600" />
-                AI Market Recommendation
-              </h3>
-              <p className="text-sm text-indigo-800 mt-3 font-medium leading-relaxed">
-                {profile?.marketIntelligence?.recommendation || "Syncing your personalized AI recommendation..."}
-              </p>
-            </div>
-          </div>
         </div>
         )}
 

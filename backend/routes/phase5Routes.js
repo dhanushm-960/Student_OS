@@ -8,7 +8,6 @@ import {
   getCompanies,
   addCompany,
   getPlacementPredictions,
-  getAiRecommendations,
   aiMentorChat,
   getWeeklySummary,
   getSkillGapAnalysis,
@@ -16,16 +15,18 @@ import {
 } from "../controllers/phase5Controller.js";
 
 import { generateQuiz, submitQuiz } from "../controllers/quizController.js";
-import { getLiveMarket, getPersonalizedMarket, triggerMarketSync, triggerMarketSyncOffline } from "../controllers/marketController.js";
+import { getLiveMarket, triggerMarketSync, triggerMarketSyncOffline } from "../controllers/marketController.js";
 
 const router = express.Router();
-const upload = multer({ limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB limit, keep in memory
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } 
+});
 
 // Student Routes
 router.post("/resume/upload", protect, upload.single("resume"), uploadResume);
 router.get("/student/companies/matches", protect, getRecruiterMatches);
 router.get("/student/match-history", protect, getMatchScoreHistory);
-router.get("/student/ai-recommendations", protect, getAiRecommendations);
 router.post("/student/ai-mentor/chat", protect, aiMentorChat);
 router.get("/student/weekly-summary", protect, getWeeklySummary);
 router.get("/student/skill-gaps", protect, getSkillGapAnalysis);
@@ -34,7 +35,6 @@ router.post("/student/quiz/submit", protect, submitQuiz);
 
 // Market Routes
 router.get("/market/live", protect, getLiveMarket);
-router.get("/market/personalized", protect, getPersonalizedMarket);
 router.post("/market/sync", protect, admin, triggerMarketSync);
 
 // Admin Routes
