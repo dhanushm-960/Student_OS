@@ -29,7 +29,7 @@ export function AdminDrivesPage() {
 
   const fetchDrives = async () => {
     try {
-      const res = await fetch("${import.meta.env.VITE_API_URL}/api/admin/drives", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/drives`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -43,7 +43,7 @@ export function AdminDrivesPage() {
 
   const fetchCompanies = async () => {
     try {
-      const res = await fetch("${import.meta.env.VITE_API_URL}/api/admin/companies", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/companies`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -56,7 +56,7 @@ export function AdminDrivesPage() {
   const handleCreateDrive = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("${import.meta.env.VITE_API_URL}/api/admin/drives", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/drives`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
