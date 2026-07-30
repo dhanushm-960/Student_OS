@@ -31,21 +31,7 @@ export const getLiveMarket = async (req, res, next) => {
   }
 };
 
-// @desc    Get personalized market intelligence for the student
-// @route   GET /api/market/personalized
-// @access  Private
-export const getPersonalizedMarket = async (req, res, next) => {
-  try {
-    const profile = await StudentProfile.findOne({ user: req.user._id });
-    if (!profile) {
-      res.status(404);
-      throw new Error("Student profile not found.");
-    }
-    res.json({ success: true, intelligence: profile.marketIntelligence });
-  } catch (error) {
-    next(error);
-  }
-};
+
 
 // @desc    Manually trigger the market sync with Adzuna
 // @route   POST /api/market/sync

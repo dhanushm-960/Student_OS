@@ -246,6 +246,8 @@ export const updateOwnProfile = async (req, res, next) => {
         skills: updated.skills || [],
         linkedIn: updated.linkedIn || "",
         github: updated.github || "",
+        studyPreferences: updated.studyPreferences || "",
+        studyAvailability: updated.studyAvailability || { dailyHours: 4, timeWindows: [] },
         placementBreakdown: updated.placementBreakdown || { resume: 0, projects: 0, communication: 0 },
         setupCompleted: updated.setupCompleted || false,
       },

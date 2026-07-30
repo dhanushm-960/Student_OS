@@ -6,7 +6,7 @@ import Project from "../models/Project.js";
 import Goal from "../models/Goal.js";
 import StudentTask from "../models/StudentTask.js";
 import { buildStudentContext } from "../utils/contextBuilder.js";
-import { analyzeResume, generateActionChecklist, generateRecommendation, chatWithMentor, generateWeeklySummary } from "../utils/aiService.js";
+import { analyzeResume, generateActionChecklist, chatWithMentor, generateWeeklySummary } from "../utils/aiService.js";
 import { calculateMatchScore } from "../utils/matchScoring.js";
 import { logStudentMatchAudit, logCompanyMatchAudit } from "../utils/auditTrail.js";
 import MatchScoreHistory from "../models/MatchScoreHistory.js";
@@ -450,7 +450,8 @@ export const getPlacementPredictions = async (req, res, next) => {
           name: student.user?.name || "Unknown Student",
           email: student.user?.email || "",
           roll: student.rollNumber,
-          dept: student.department,
+          major: student.major,
+          minor: student.minor,
           gpa: student.gpa,
           resumeScore: student.resumeDetails?.score || 0,
           readinessScore: prediction.score,
@@ -478,24 +479,7 @@ export const getPlacementPredictions = async (req, res, next) => {
   }
 };
 
-// @desc    Get dynamic AI recommendations for the logged in student
-// @route   GET /api/student/ai-recommendations
-// @access  Private
-export const getAiRecommendations = async (req, res, next) => {
-  try {
-    const context = await buildStudentContext(req.user._id);
-    const recsResult = await generateRecommendation(context);
 
-    res.json({
-      success: true,
-      currentReadiness: context.studentProfile.placementReadiness,
-      predictedAfterCompletion: recsResult.predictedAfterCompletion,
-      recommendations: recsResult.recommendations
-    });
-  } catch (error) {
-    next(error);
-  }
-};
 
 // @desc    Get match score audit history for the student
 // @route   GET /api/student/match-history

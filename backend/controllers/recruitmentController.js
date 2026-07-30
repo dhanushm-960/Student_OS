@@ -15,11 +15,14 @@ export const createDrive = async (req, res, next) => {
   try {
     const { companyId, roleTitle, description, deadline, eligibleMajors } = req.body;
 
+    let finalDeadline = new Date(deadline);
+    finalDeadline.setHours(23, 59, 59, 999);
+
     const drive = await RecruitmentDrive.create({
       companyId,
       roleTitle,
       description,
-      deadline,
+      deadline: finalDeadline,
       eligibleMajors: eligibleMajors || ["ALL"],
       createdBy: req.user._id
     });
@@ -103,7 +106,10 @@ export const getEligibleDrives = async (req, res, next) => {
       throw new Error("Student profile not found.");
     }
 
-    const drives = await RecruitmentDrive.find({ deadline: { $gte: new Date() } })
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const drives = await RecruitmentDrive.find({ deadline: { $gte: today } })
       .populate("companyId")
       .sort({ deadline: 1 });
 

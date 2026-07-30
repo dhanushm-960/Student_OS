@@ -28,8 +28,8 @@ const app = express();
 
 // Global Middlewares
 const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:3000",
+  /^http:\/\/localhost:\d+$/,
+  /^http:\/\/127\.0\.0\.1:\d+$/,
   /\.vercel\.app$/,
   /\.onrender\.com$/,
   // Add your custom domain here if you have one, e.g. "https://studentos.com"
@@ -66,7 +66,7 @@ app.use("/api/student", plannerRoutes);
 app.use("/api", recruitmentRoutes);
 
 // Static uploads folder
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // 404 Route handler
 app.use((req, res, next) => {

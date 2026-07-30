@@ -13,12 +13,20 @@ import {
   getMyApplications
 } from "../controllers/recruitmentController.js";
 
+import fs from "fs";
+
 const router = express.Router();
+
+// Ensure external uploads directory exists to prevent crash
+const uploadDir = path.join(process.cwd(), "../uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // Multer storage setup
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "uploads/"); // Saving to backend/uploads/
+    cb(null, uploadDir); // Saving to ../uploads/ outside watched backend dir
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);

@@ -23,10 +23,10 @@ export function StudentDrivesPage() {
   const fetchData = async () => {
     try {
       const [drivesRes, appsRes] = await Promise.all([
-        fetch("${import.meta.env.VITE_API_URL}/api/student/drives", {
+        fetch(`${import.meta.env.VITE_API_URL}/api/student/drives`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        fetch("${import.meta.env.VITE_API_URL}/api/student/applications", {
+        fetch(`${import.meta.env.VITE_API_URL}/api/student/applications`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
