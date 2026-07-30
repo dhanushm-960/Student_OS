@@ -11,8 +11,10 @@ const C = {
   cyan: "#06B6D4",
 };
 
-const majorsList = ["All", "Computer Science", "Artificial Intelligence", "Data Science", "Life Sciences", "Business", "Design"];
-const minorsList = ["All", "Computer Science", "Artificial Intelligence", "Data Science", "Life Sciences", "Business", "Design", "None"];
+import { MAJORS, MINORS } from "../constants/careerGoals";
+
+const majorsList = ["All", ...MAJORS];
+const minorsList = ["All", ...MINORS];
 
 const riskColors: Record<string, { bg: string; text: string }> = {
   Low: { bg: "#ECFDF5", text: "#059669" },
