@@ -284,7 +284,7 @@ export const getStudents = async (req, res, next) => {
       );
     }
 
-    const formattedStudents = students.map(s => ({
+    let formattedStudents = students.map(s => ({
       id: s._id,
       name: s.user?.name || "Unknown",
       email: s.user?.email || "",
