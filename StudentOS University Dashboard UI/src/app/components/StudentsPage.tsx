@@ -332,7 +332,7 @@ function StudentProfileModal({ student, onClose, onDelete }: { student: any; onC
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl"
+        className="w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
         style={{
           background: "white",
           boxShadow: "0 24px 64px rgba(79,70,229,0.2)",
@@ -391,7 +391,9 @@ function StudentProfileModal({ student, onClose, onDelete }: { student: any; onC
           </div>
         </div>
 
-        {/* Stats grid */}
+        {/* Scrollable Body */}
+        <div className="overflow-y-auto flex-1 custom-scrollbar">
+          {/* Stats grid */}
         <div className="p-6 grid grid-cols-3 gap-4">
           {[
             { label: "Placement Readiness", value: `${displayStudent.placement}%`, icon: Target, color: C.indigo, bg: "#EEF2FF" },
@@ -451,10 +453,9 @@ function StudentProfileModal({ student, onClose, onDelete }: { student: any; onC
           </div>
           <div className="space-y-2.5">
             {[
-              { label: "Resume", value: displayStudent.placementBreakdown?.resume || 0, color: C.indigo },
-              { label: "Projects", value: displayStudent.placementBreakdown?.projects || 0, color: C.green },
-              { label: "Communication", value: displayStudent.placementBreakdown?.communication || 0, color: C.purple },
-              { label: "Communication", value: displayStudent.placementBreakdown?.communication || 0, color: C.cyan },
+              { label: "Resume Quality", value: displayStudent.placementBreakdown?.resume || Math.round(displayStudent.placement * 0.4) || 0, color: C.indigo },
+              { label: "Projects & Skills", value: displayStudent.placementBreakdown?.projects || Math.round(displayStudent.placement * 0.3) || 0, color: C.green },
+              { label: "Academics", value: displayStudent.placementBreakdown?.academics || Math.round(displayStudent.placement * 0.3) || 0, color: C.purple },
             ].map((item) => (
               <div key={item.label}>
                 <div className="flex items-center justify-between mb-1">
@@ -545,7 +546,8 @@ function StudentProfileModal({ student, onClose, onDelete }: { student: any; onC
               )}
             </ul>
           )}
-        </div>
+        </div> {/* End AI Recs */}
+        </div> {/* End Scrollable Body */}
       </div>
     </div>
   );
