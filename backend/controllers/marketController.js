@@ -15,8 +15,14 @@ export const getLiveMarket = async (req, res, next) => {
       // If none exists, try looking for Bangalore as a fallback, or run sync
       summary = await MarketSummary.findOne({ location: "Bangalore" });
       if (!summary) {
-         // Should ideally not happen if sync is running
-         return res.json({ success: true, market: null });
+         console.log("No market data found in DB, triggering ad-hoc sync...");
+         await syncMarketData();
+         summary = await MarketSummary.findOne({ location: "Bangalore" });
+         
+         if (!summary) {
+            // Should ideally not happen if sync is running, but return fallback instead of null
+            return res.json({ success: true, market: { topSkills: [], topCompanies: [], trendingRoles: [] } });
+         }
       }
     }
     res.json({ success: true, market: summary });
